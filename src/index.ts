@@ -1,5 +1,6 @@
 import { CronJob } from 'cron';
 import { maybeKickOffCongressFeed } from './datasources/Congress';
+import { maybePullPostsFromRedditWorldNews } from './datasources/Reddit';
 
 async function main() {
   console.log("Kicking off jobs...");
@@ -9,6 +10,7 @@ main();
 
 async function kickOffJobs() {
   await maybeKickOffCongressFeed();
+  await maybePullPostsFromRedditWorldNews();
 }
 
 const cronEveryMidnight = '0 0 * * *'; // Run once every day at midnight
