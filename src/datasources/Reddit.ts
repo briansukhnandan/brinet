@@ -97,6 +97,8 @@ export const maybePullPostsFromRedditWorldNews = async() => {
   await redditFetcher.initAccessToken();
 
   const posts = await redditFetcher.pullPostsFromRedditWorldNews();
+
+  // TODO - Implement posting to Bluesky
 }
 
 type RedditPost = {
