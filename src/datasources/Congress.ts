@@ -2,6 +2,7 @@ import moment from "moment-timezone";
 import {
   fetchSecret,
   handlePromiseAllSettled,
+  numWithOrdinalSuffix,
   prepareObjForRequest
 } from "../Util";
 import { postToBluesky } from "../Bluesky";
@@ -78,13 +79,19 @@ const getBillsOp = async(opts: Partial<{
 }
 
 const getDetailsAboutSpecificBill = async(
-  billUrl: string
+  bill: CongressBillBasic
 ): Promise<CongressBillDetailed> => {
-  if (!billUrl) {
+  if (!bill.url) {
     throw new Error("Could not find URL!");
   }
-  const billDetailsRaw = await _fetchFromUrlGivenFromBillResponse(billUrl);
-  return billDetailsRaw.bill;
+  const billDetailsRaw = await _fetchFromUrlGivenFromBillResponse(bill.url);
+
+  // Some details about the bill aren't given on
+  // the Detailed object.
+  return {
+    ...billDetailsRaw.bill,
+    originChamber: bill.originChamber,
+  }
 }
 
 const getLatestSummaryForBill = async(
@@ -147,16 +154,20 @@ const mapBillInfoToSummaries = (
       updateDate: billInfo.updateDate,
       introducedDate: billInfo.introducedDate,
       number: billInfo.number,
+      originChamber: billInfo.originChamber,
     });
   }
   return billInfoCongregated;
 }
 
+const getBillUrlForViewer = (bill: CongressBillFieldsOfInterest) =>
+  `https://www.congress.gov/bill/${numWithOrdinalSuffix(bill.congress)}-congress/${bill.originChamber === "House" ? "house" : "senate"}-bill/${bill.number}`;
+
 const postBillToBluesky = async(bill: CongressBillFieldsOfInterest) => {
-  let parentPostText = `Action on Bill: ${bill.number}\n`;
+  let parentPostText = `Action on Bill: ${bill.number} - ${getBillUrlForViewer(bill)}\n\n`;
   const paddedTitle = bill.title.length < 175 
     ? bill.title 
-    : `${bill.title.slice(0, 175)}...`;
+    : `${bill.title.slice(0, 150)}...`;
   parentPostText += paddedTitle+"\n\n";
   parentPostText += 
     "First Introduced: " +
@@ -221,7 +232,7 @@ export const maybeKickOffCongressFeed = async() => {
   if (!billsActionedToday.length) return;
 
   const billInfoProms: Promise<CongressBillDetailed>[] = 
-    billsActionedToday.map((b) => getDetailsAboutSpecificBill(b.url));
+    billsActionedToday.map(getDetailsAboutSpecificBill);
   const billInfos = await handlePromiseAllSettled(billInfoProms);
   if (!billInfos.length) return;
 
@@ -257,6 +268,7 @@ type CongressBillDetailed = {
   title: string;
   congress: number;
   number: string;
+  originChamber: "House" | "Senate";
   policyArea: { name: string };
   introducedDate: string;
   updateDate: string;
@@ -298,4 +310,5 @@ type CongressBillFieldsOfInterest = {
   updateDate: string;
   summary: CongressBillSummary;
   sponsors: CongressBillDetailed["sponsors"];
+  originChamber: "House" | "Senate";
 };
