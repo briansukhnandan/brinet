@@ -1,5 +1,5 @@
 # brinet
-Brinet is a custom feed that pulls relevant info from multiple data sources, and uploads them to Bluesky.
+Brinet is a custom feed that pulls info from multiple data sources, and uploads them to Bluesky.
 
 These data sources include:
 - Actions on Bills in the US Congress
