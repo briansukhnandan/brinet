@@ -47,5 +47,6 @@ export class Logger {
     }
     const msgToLog = prependTimestampToMsg(msg);
     fs.appendFileSync(logPath, msgToLog+"\n");
+    console.log(msgToLog);
   }
 }
