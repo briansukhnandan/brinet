@@ -31,7 +31,11 @@ export class Logger {
   private writePath: string;
   private context: DataSourceContext;
   constructor(context: DataSourceContext) {
-    this.writePath = fetchSecret(contextToSecret[context]);
+    // Strip trailing slash from secret if it exists
+    const writePathSecret = fetchSecret(contextToSecret[context]);
+    this.writePath = writePathSecret.at(-1) === "/"
+      ? writePathSecret.slice(0, writePathSecret.length - 1)
+      : writePathSecret;
     this.context = context;
   }
 
