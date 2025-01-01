@@ -202,7 +202,7 @@ const postBillToBluesky = async(bill: CongressBillFieldsOfInterest) => {
   let sponsorsReplyText = "Sponsors of this Bill:\n";
   for (const sponsor of bill.sponsors) {
     if (sponsorsReplyText.length < 250) {
-      sponsorsReplyText += `${sponsor.fullName}\n`;
+      sponsorsReplyText += `- ${sponsor.fullName}\n`;
     }
   }
 
