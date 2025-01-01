@@ -16,12 +16,10 @@ dotenv.config();
 const contextToSecret = {
   [DataSourceContext.CONGRESS]: "CONGRESS_API_LOG_PATH",
   [DataSourceContext.WORLDNEWS]: "REDDIT_WORLDNEWS_LOG_PATH",
-  [DataSourceContext.USNEWS]: "REDDIT_USNEWS_LOG_PATH",
 };
 const contextToLogFileBaseNameWithPath = {
   [DataSourceContext.CONGRESS]: "CONGRESS_BLUESKY_LOG.txt",
   [DataSourceContext.WORLDNEWS]: "REDDIT_WORLDNEWS_LOG.txt",
-  [DataSourceContext.USNEWS]: "REDDIT_USNEWS_LOG.txt",
 };
 
 const formatMsgForLogging = (msg: string, context: DataSourceContext)  =>
