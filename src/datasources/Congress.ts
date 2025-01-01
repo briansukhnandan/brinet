@@ -146,19 +146,26 @@ const mapBillInfoToSummaries = (
       title: billInfo.title,
       updateDate: billInfo.updateDate,
       introducedDate: billInfo.introducedDate,
+      number: billInfo.number,
     });
   }
   return billInfoCongregated;
 }
 
 const postBillToBluesky = async(bill: CongressBillFieldsOfInterest) => {
-  let parentPostText = "";
+  let parentPostText = `Action on Bill: ${bill.number}\n`;
   const paddedTitle = bill.title.length < 175 
     ? bill.title 
     : `${bill.title.slice(0, 175)}...`;
   parentPostText += paddedTitle+"\n\n";
-  parentPostText += "First Introduced: "+bill.introducedDate+"\n";
-  parentPostText += "Last Updated: "+bill.updateDate+"\n";
+  parentPostText += 
+    "First Introduced: " +
+    moment(bill.introducedDate).format("lll") +
+    "\n";
+  parentPostText +=
+    "Last Updated: " +
+    moment(bill.updateDate).format("lll")
+    +"\n";
 
   const rootPost = await postToBluesky(
     { text: parentPostText },
@@ -232,8 +239,8 @@ export const maybeKickOffCongressFeed = async() => {
 
   const billsToPost = mapBillInfoToSummaries(billInfos, billSummaries);
   for (const billToPost of billsToPost) {
-    congressLogger.log(`Posting the following bill: ${billToPost.title.slice(0, 200)}`);
     setTimeout(async() => await postBillToBluesky(billToPost), 5_000);
+    congressLogger.log(`Posting the following bill: ${billToPost.title.slice(0, 200)}`);
   }
 }
 
@@ -284,6 +291,7 @@ type CongressBillSummary = {
 /** Our own conglomerated type */
 type CongressBillFieldsOfInterest = {
   title: string;
+  number: string;
   congress: number;
   policyArea: string;
   introducedDate: string;

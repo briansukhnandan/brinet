@@ -1,6 +1,6 @@
 import moment from "moment-timezone";
 import fs from "fs";
-import { DataSourceContext } from "./Constants";
+import { DataSourceContext, DataSourceContextToLabel } from "./Constants";
 import { fetchSecret } from "./Util";
 
 // These need to be loaded in every module that fetches 
@@ -24,8 +24,8 @@ const contextToLogFileBaseNameWithPath = {
   [DataSourceContext.USNEWS]: "REDDIT_USNEWS_LOG.txt",
 };
 
-const prependTimestampToMsg = (msg: string) =>
-  `[${moment().format("YYYY-MM-DD HH:mm:ss")}] ${msg}`;
+const formatMsgForLogging = (msg: string, context: DataSourceContext)  =>
+  `[${moment().format("YYYY-MM-DD HH:mm:ss")}][${DataSourceContextToLabel[context]}] ${msg}`;
 
 export class Logger {
   private writePath: string;
@@ -45,7 +45,7 @@ export class Logger {
     if (!fs.existsSync(logPath)) {
       fs.writeFileSync(logPath, "");
     }
-    const msgToLog = prependTimestampToMsg(msg);
+    const msgToLog = formatMsgForLogging(msg, this.context);
     fs.appendFileSync(logPath, msgToLog+"\n");
     console.log(msgToLog);
   }
