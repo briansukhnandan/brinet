@@ -1,6 +1,6 @@
 import { AtpAgent } from '@atproto/api';
-import { DataSourceContext } from './constants';
-import { fetchSecret } from './util';
+import { DataSourceContext } from './Constants';
+import { fetchSecret } from './Util';
 
 const agent = new AtpAgent({
   service: 'https://bsky.social',

@@ -3,13 +3,13 @@ import {
   fetchSecret,
   handlePromiseAllSettled,
   prepareObjForRequest
-} from "../util";
+} from "../Util";
 
 // These need to be loaded in every module that fetches 
 // a secret at runtime.
 import dotenv from 'dotenv';
 import { postToBluesky } from "../Bluesky";
-import { DataSourceContext } from "../constants";
+import { DataSourceContext } from "../Constants";
 dotenv.config();
 
 class CongressSecretFetcher {
