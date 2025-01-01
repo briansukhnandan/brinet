@@ -1,6 +1,11 @@
 import moment from "moment-timezone";
 import fs from "fs";
-import { DataSourceContext, DataSourceContextToLabel } from "./Constants";
+import {
+  contextToLogFileBaseNameWithPath,
+  contextToSecret,
+  DataSourceContext,
+  DataSourceContextToLabel
+} from "./Constants";
 import { fetchSecret } from "./Util";
 
 // These need to be loaded in every module that fetches 
@@ -13,14 +18,6 @@ dotenv.config();
  * latest log file exceeds a certain size. If so, creates a new
  * log file and uses that for all subsequent logs.
  */
-const contextToSecret = {
-  [DataSourceContext.CONGRESS]: "CONGRESS_API_LOG_PATH",
-  [DataSourceContext.WORLDNEWS]: "REDDIT_WORLDNEWS_LOG_PATH",
-};
-const contextToLogFileBaseNameWithPath = {
-  [DataSourceContext.CONGRESS]: "CONGRESS_BLUESKY_LOG.txt",
-  [DataSourceContext.WORLDNEWS]: "REDDIT_WORLDNEWS_LOG.txt",
-};
 
 const formatMsgForLogging = (msg: string, context: DataSourceContext)  =>
   `[${moment().format("YYYY-MM-DD HH:mm:ss")}][${DataSourceContextToLabel[context]}] ${msg}`;

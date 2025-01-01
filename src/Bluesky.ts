@@ -1,5 +1,5 @@
 import { AtpAgent } from '@atproto/api';
-import { DataSourceContext } from './Constants';
+import { contextToBlueskySecretKeys, DataSourceContext } from './Constants';
 import { fetchSecret } from './Util';
 
 const agent = new AtpAgent({
@@ -12,29 +12,14 @@ function fetchBlueskyCredsFromContext(
   identifier: string;
   password: string;
 } {
-  const contextToSecretKeys: Partial<
-    Record<
-      DataSourceContext, 
-      {
-        identifier: string,
-        password: string,
-      }
-    >
-  > = {
-    [DataSourceContext.CONGRESS]: {
-      identifier: "CONGRESS_TRACKER_BLUESKY_USERNAME",
-      password: "CONGRESS_TRACKER_BLUESKY_PASSWORD"
-    }
-  };
-
-  if (!contextToSecretKeys[context]) {
+  if (!contextToBlueskySecretKeys[context]) {
     throw new Error("Did not find secret pair for given context!");
   }
 
   const {
     identifier: identifierSecret, 
     password: passwordSecret
-  } = contextToSecretKeys[context];
+  } = contextToBlueskySecretKeys[context];
 
   return {
     identifier: fetchSecret(identifierSecret),
