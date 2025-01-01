@@ -2,8 +2,6 @@ import { AtpAgent } from '@atproto/api';
 import { DataSourceContext } from './constants';
 import { fetchSecret } from './util';
 
-const { CONGRESS } = DataSourceContext;
-
 const agent = new AtpAgent({
   service: 'https://bsky.social',
 });
@@ -23,7 +21,7 @@ function fetchBlueskyCredsFromContext(
       }
     >
   > = {
-    [CONGRESS]: {
+    [DataSourceContext.CONGRESS]: {
       identifier: "CONGRESS_TRACKER_BLUESKY_USERNAME",
       password: "CONGRESS_TRACKER_BLUESKY_PASSWORD"
     }
