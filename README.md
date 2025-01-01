@@ -6,6 +6,7 @@ These data sources include:
 - Reddit r/worldnews
 
 To setup, PTAL at, complete, and rename `.env.template` to `.env`.
+
 You should then be able to run `brinet` locally with the following command from the root of the project:
 ```
 npm run start
