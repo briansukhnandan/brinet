@@ -125,7 +125,7 @@ const mapBillInfoToSummaries = (
   billInfos: CongressBillDetailed[], 
   billSummaries: CongressBillSummary[]
 ) => {
-  const billNumberToSummary = {};
+  const billNumberToSummary: Record<string, CongressBillSummary> = {};
   billSummaries.forEach(summary => {
     billNumberToSummary[summary.bill.number] = summary;
   });
@@ -133,6 +133,8 @@ const mapBillInfoToSummaries = (
   const billInfoCongregated: CongressBillFieldsOfInterest[] = [];
   for (const billInfo of billInfos) {
     const summary = billNumberToSummary[billInfo.number];
+    if (!summary) continue;
+
     billInfoCongregated.push({
       summary,
       sponsors: billInfo.sponsors,
