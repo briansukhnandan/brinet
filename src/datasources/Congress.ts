@@ -4,12 +4,13 @@ import {
   handlePromiseAllSettled,
   prepareObjForRequest
 } from "../Util";
+import { postToBluesky } from "../Bluesky";
+import { DataSourceContext } from "../Constants";
+import { Logger } from "src/Logger";
 
 // These need to be loaded in every module that fetches 
 // a secret at runtime.
 import dotenv from 'dotenv';
-import { postToBluesky } from "../Bluesky";
-import { DataSourceContext } from "../Constants";
 dotenv.config();
 
 class CongressSecretFetcher {
@@ -23,6 +24,8 @@ class CongressSecretFetcher {
 }
 
 const secretFetcher = new CongressSecretFetcher();
+const congressLogger = new Logger(DataSourceContext.CONGRESS);
+
 const BASE_URL = "https://api.congress.gov/v3";
 const urlForRequest = (
   endpoint: string, 
@@ -229,6 +232,7 @@ export const maybeKickOffCongressFeed = async() => {
 
   const billsToPost = mapBillInfoToSummaries(billInfos, billSummaries);
   for (const billToPost of billsToPost) {
+    congressLogger.log(`Posting the following bill: ${billToPost.title.slice(0, 200)}`);
     setTimeout(async() => await postBillToBluesky(billToPost), 5_000);
   }
 }
