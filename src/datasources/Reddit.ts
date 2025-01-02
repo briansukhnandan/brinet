@@ -1,4 +1,9 @@
-import { fetchSecret, prepareObjForRequest, truncateText } from 'src/Util';
+import { 
+  fetchSecret, 
+  IS_DEV, 
+  prepareObjForRequest, 
+  truncateText 
+} from 'src/Util';
 import { postToBluesky } from 'src/Bluesky';
 import { DataSourceContext } from 'src/Constants';
 import moment from 'moment-timezone';
@@ -82,7 +87,7 @@ class RedditFetcher {
     const listing = await this.makeRequest(`/r/worldnews/top`, 
       prepareObjForRequest({
         t: "day", 
-        limit: 10
+        limit: IS_DEV() ? 3 : 10
       })
     );
     const posts: RedditPost[] = listing.data.children.map((
@@ -92,11 +97,8 @@ class RedditFetcher {
   }
 }
 
-const fetchRedditThumbnailBlob = async(redditPost: RedditPost) => {
-  const thumbnailUrl = redditPost.thumbnail;
-  if (!thumbnailUrl) return;
-
-  const res = await fetch(thumbnailUrl, {
+const fetchBlobFromRedditLink = async(link: string): Promise<Blob> => {
+  const res = await fetch(link, {
     method: "GET"
   });
   return await res.blob();
@@ -107,7 +109,10 @@ const postRedditPostToBluesky = async(redditPost: RedditPost) => {
   rootPostText += `Posted on ${
     moment(redditPost.created_utc * 1000).tz("America/New_York").format("lll")
   }\n\n${truncateText(redditPost.title, 150)}`;
-  const thumbnailBlob = await fetchRedditThumbnailBlob(redditPost);
+  let thumbnailBlob: Blob | undefined; 
+  if (redditPost.thumbnail) {
+    thumbnailBlob = await fetchBlobFromRedditLink(redditPost.thumbnail);
+  }
 
   const rootPost = await postToBluesky(
     { 
@@ -143,10 +148,12 @@ export const maybePullPostsFromRedditWorldNews = async() => {
 
   const posts = await redditFetcher.pullPostsFromRedditWorldNews();
   for (const redditPost of posts) {
-    setTimeout(async() => await postRedditPostToBluesky(redditPost), 5_000);
-    worldNewsLogger.log(
-      `Posted the following thread with ID ${redditPost.id}: ${redditPost.title.slice(0, 200)}`
-    );
+    setTimeout(async() => {
+      await postRedditPostToBluesky(redditPost);
+      worldNewsLogger.log(
+        `Posted the following thread with ID ${redditPost.id}: ${redditPost.title.slice(0, 200)}`
+      );
+    }, 5_000);
   }
 }
 
@@ -157,4 +164,11 @@ type RedditPost = {
   permalink: string;
   created_utc: number; // unix timestamp
   thumbnail: string;
+  preview: {
+    images: {
+      source: {
+        url: string;
+      }
+    }[];
+  };
 }
