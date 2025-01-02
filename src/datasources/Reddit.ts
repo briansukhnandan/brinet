@@ -120,14 +120,17 @@ const postRedditPostToBluesky = async(redditPost: RedditPost) => {
   );
 
   let replyText = "Link to post:"
-  await postToBluesky({
-    text: replyText,
-    link: `https://reddit.com${redditPost.permalink}`,
-    reply: {
-      root: rootPost,
-      parent: rootPost,
+  await postToBluesky(
+    {
+      text: replyText,
+      link: `https://reddit.com${redditPost.permalink}`,
+      reply: {
+        root: rootPost,
+        parent: rootPost,
+      },
     },
-  }, DataSourceContext.WORLDNEWS);
+    DataSourceContext.WORLDNEWS
+  );
 }
 
 export const maybePullPostsFromRedditWorldNews = async() => {
