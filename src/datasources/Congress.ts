@@ -3,7 +3,8 @@ import {
   fetchSecret,
   handlePromiseAllSettled,
   numWithOrdinalSuffix,
-  prepareObjForRequest
+  prepareObjForRequest,
+  truncateText
 } from "../Util";
 import { postToBluesky } from "../Bluesky";
 import { DataSourceContext } from "../Constants";
@@ -165,9 +166,7 @@ const getBillUrlForViewer = (bill: CongressBillFieldsOfInterest) =>
 
 const postBillToBluesky = async(bill: CongressBillFieldsOfInterest) => {
   let parentPostText = `Action on Bill: ${bill.number} - ${getBillUrlForViewer(bill)}\n\n`;
-  const paddedTitle = bill.title.length < 175 
-    ? bill.title 
-    : `${bill.title.slice(0, 150)}...`;
+  const paddedTitle = truncateText(bill.title, 175); 
   parentPostText += paddedTitle+"\n\n";
   parentPostText += 
     "First Introduced: " +
@@ -184,10 +183,7 @@ const postBillToBluesky = async(bill: CongressBillFieldsOfInterest) => {
   );
 
   const summaryText = bill.summary.text;
-  const summaryReplyText = summaryText.length > 300 
-    ? `${summaryText.slice(0, 298)}...`
-    : summaryText;
-
+  const summaryReplyText = truncateText(summaryText, 300);
   const summaryReplyPost = await postToBluesky(
     { 
       text: summaryReplyText, 

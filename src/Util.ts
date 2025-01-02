@@ -57,6 +57,11 @@ export function numWithOrdinalSuffix(i: number) {
   return i + "th";
 }
 
+export function truncateText(text: string, length = 250) {
+  if (text.length <= length) return text;
+  return `${text.slice(0, length - 3)}...`;
+}
+
 export const IS_DEV = () => {
   return fetchSecret("ENVIRONMENT") === "dev";
 }

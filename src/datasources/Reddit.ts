@@ -1,4 +1,8 @@
-import { fetchSecret } from 'src/Util';
+import { fetchSecret, prepareObjForRequest, truncateText } from 'src/Util';
+import { postToBluesky } from 'src/Bluesky';
+import { DataSourceContext } from 'src/Constants';
+import moment from 'moment-timezone';
+import { Logger } from 'src/Logger';
 
 // These need to be loaded in every module that fetches 
 // a secret at runtime.
@@ -8,6 +12,8 @@ dotenv.config();
 const TOKEN_BASE_URL = 'https://www.reddit.com/api/v1/access_token'
 const API_BASE_URL = 'https://oauth.reddit.com';
 const REQUEST_TIMEOUT = 30 * 1000;
+
+const worldNewsLogger = new Logger(DataSourceContext.WORLDNEWS);
 
 class RedditFetcher {
   private accessToken: string;
@@ -75,15 +81,53 @@ class RedditFetcher {
   }
 
   public async pullPostsFromRedditWorldNews() {
-    const listing = await this.makeRequest(`/r/worldnews/top`, {
-      t: "day", 
-      count: "25"
-    });
+    const listing = await this.makeRequest(`/r/worldnews/top`, 
+      prepareObjForRequest({
+        t: "day", 
+        limit: 10
+      })
+    );
     const posts: RedditPost[] = listing.data.children.map((
       child: { data: RedditPost }) => child.data
     );
     return posts;
   }
+}
+
+const fetchRedditThumbnailBlob = async(redditPost: RedditPost) => {
+  const thumbnailUrl = redditPost.thumbnail;
+  if (!thumbnailUrl) return;
+
+  const res = await fetch(thumbnailUrl, {
+    method: "GET"
+  });
+  return await res.blob();
+}
+
+const postRedditPostToBluesky = async(redditPost: RedditPost) => {
+  let rootPostText = "";
+  rootPostText += `Posted on ${
+    moment(redditPost.created_utc * 1000).tz("America/New_York").format("lll")
+  }\n\n${truncateText(redditPost.title, 150)}`;
+  const thumbnailBlob = await fetchRedditThumbnailBlob(redditPost);
+
+  const rootPost = await postToBluesky(
+    { 
+      text: rootPostText, 
+      image: thumbnailBlob,
+    },
+    DataSourceContext.WORLDNEWS
+  );
+
+  let replyText = "Link to post:"
+  await postToBluesky({
+    text: replyText,
+    link: `https://reddit.com${redditPost.permalink}`,
+    reply: {
+      root: rootPost,
+      parent: rootPost,
+    },
+  }, DataSourceContext.WORLDNEWS);
 }
 
 export const maybePullPostsFromRedditWorldNews = async() => {
@@ -97,11 +141,16 @@ export const maybePullPostsFromRedditWorldNews = async() => {
   await redditFetcher.initAccessToken();
 
   const posts = await redditFetcher.pullPostsFromRedditWorldNews();
-
-  // TODO - Implement posting to Bluesky
+  for (const redditPost of posts) {
+    setTimeout(async() => await postRedditPostToBluesky(redditPost), 5_000);
+    worldNewsLogger.log(
+      `Posted the following thread with ID ${redditPost.id}: ${redditPost.title.slice(0, 200)}`
+    );
+  }
 }
 
 type RedditPost = {
+  id: string;
   title: string;
   url: string;
   permalink: string;

@@ -30,7 +30,7 @@ export const contextToBlueskySecretKeys: Record<
     password: "CONGRESS_TRACKER_BLUESKY_PASSWORD"
   },
   [DataSourceContext.WORLDNEWS]: {
-    identifier: "WORLDNEWS_BLUESKY_USERNAME",
-    password: "WORLDNEWS_BLUESKY_PASSWORD"
+    identifier: "REDDIT_WORLDNEWS_BLUESKY_USERNAME",
+    password: "REDDIT_WORLDNEWS_BLUESKY_PASSWORD"
   }
 };
