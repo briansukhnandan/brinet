@@ -11,8 +11,6 @@ dotenv.config();
 
 const TOKEN_BASE_URL = 'https://www.reddit.com/api/v1/access_token'
 const API_BASE_URL = 'https://oauth.reddit.com';
-const REQUEST_TIMEOUT = 30 * 1000;
-
 const worldNewsLogger = new Logger(DataSourceContext.WORLDNEWS);
 
 class RedditFetcher {
@@ -134,7 +132,7 @@ const postRedditPostToBluesky = async(redditPost: RedditPost) => {
 }
 
 export const maybePullPostsFromRedditWorldNews = async() => {
-  /** 
+  /**
    * Unlike CongressSecretFetcher, RedditFetcher needs to be
    * destroyed and recreated whenever this function is called
    * bc the access token can expire. So we need to make sure it's
