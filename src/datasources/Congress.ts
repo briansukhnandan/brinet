@@ -247,8 +247,12 @@ export const maybeKickOffCongressFeed = async(dbc: DatabaseSync) => {
 
   const billsToPost = mapBillInfoToSummaries(billInfos, billSummaries);
   for (const billToPost of billsToPost) {
-    setTimeout(async() => await postBillToBluesky(billToPost), 5_000);
-    congressLogger.log(`Posted the following bill: ${billToPost.title.slice(0, 200)}`);
+    setTimeout(async() => {
+      await postBillToBluesky(billToPost);
+      congressLogger.log(
+        `Posted the following bill: ${billToPost.title.slice(0, 200)}`
+      );
+    }, 5_000);
   }
 }
 
