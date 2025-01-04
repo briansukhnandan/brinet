@@ -1,3 +1,4 @@
+import { DatabaseSync } from 'node:sqlite';
 import { 
   fetchSecret, 
   IS_DEV, 
@@ -136,7 +137,7 @@ const postRedditPostToBluesky = async(redditPost: RedditPost) => {
   );
 }
 
-export const maybePullPostsFromRedditWorldNews = async() => {
+export const maybePullPostsFromRedditWorldNews = async(dbc: DatabaseSync) => {
   /**
    * Unlike CongressSecretFetcher, RedditFetcher needs to be
    * destroyed and recreated whenever this function is called

@@ -1,3 +1,4 @@
+import { DatabaseSync } from "node:sqlite";
 import moment from "moment-timezone";
 import {
   fetchSecret,
@@ -214,7 +215,7 @@ const postBillToBluesky = async(bill: CongressBillFieldsOfInterest) => {
   );
 }
 
-export const maybeKickOffCongressFeed = async() => {
+export const maybeKickOffCongressFeed = async(dbc: DatabaseSync) => {
   const bills = await getBillsOp({
     limit: 20,
     sort: "updateDate+desc",
