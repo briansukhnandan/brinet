@@ -1,13 +1,13 @@
 CREATE TABLE reddit_worldnews_posts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-	  reddit_post_id VARCHAR(128) NOT NULL,
+    reddit_post_id VARCHAR(128) NOT NULL,
     permalink VARCHAR(256) NOT NULL,
     bluesky_post_time TIMESTAMP NOT NULL
 );
 
 CREATE TABLE congress_bill_actions (
-	  id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     bill_number VARCHAR(128) NOT NULL,
-	  congress_number INTEGER NOT NULL,
+    congress_number INTEGER NOT NULL,
     bill_update_date TIMESTAMP NOT NULL
 );
