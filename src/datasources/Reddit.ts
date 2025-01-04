@@ -1,11 +1,12 @@
 import { 
+  doesFileHaveImageExtension,
   fetchSecret, 
   IS_DEV, 
   prepareObjForRequest, 
   truncateText 
 } from 'src/Util';
 import { postToBluesky } from 'src/Bluesky';
-import { DataSourceContext } from 'src/Constants';
+import { DataSourceContext, RedditWorldnewsPostsRow } from 'src/Constants';
 import moment from 'moment-timezone';
 import { Logger } from 'src/Logger';
 import { Dbc } from 'src/db/Dbc';
@@ -111,7 +112,10 @@ const postRedditPostToBluesky = async(redditPost: RedditPost) => {
     moment(redditPost.created_utc * 1000).tz("America/New_York").format("lll")
   }\n\n${truncateText(redditPost.title, 150)}`;
   let thumbnailBlob: Blob | undefined; 
-  if (redditPost.thumbnail) {
+  if (
+    redditPost.thumbnail && 
+    doesFileHaveImageExtension(redditPost.thumbnail)
+  ) {
     thumbnailBlob = await fetchBlobFromRedditLink(redditPost.thumbnail);
   }
 
@@ -137,6 +141,27 @@ const postRedditPostToBluesky = async(redditPost: RedditPost) => {
   );
 }
 
+const insertRedditPostToDb = (dbc: Dbc, redditPost: RedditPost) => {
+  const postToInsert: RedditWorldnewsPostsRow = {
+    permalink: redditPost.permalink,
+    redditPostId: redditPost.id,
+    blueskyPostTime: moment().tz("America/New_York").format("YYYY-MM-DD HH:mm:ss")
+  };
+  const q = `
+    INSERT INTO reddit_worldnews_posts (
+      reddit_post_id, 
+      permalink, 
+      bluesky_post_time
+    ) VALUES (?, ?, ?)
+  `;
+  dbc.run(
+    q,
+    postToInsert.redditPostId,
+    postToInsert.permalink,
+    postToInsert.blueskyPostTime
+  );
+}
+
 export const maybePullPostsFromRedditWorldNews = async(dbc: Dbc) => {
   /**
    * Unlike CongressSecretFetcher, RedditFetcher needs to be
@@ -151,6 +176,7 @@ export const maybePullPostsFromRedditWorldNews = async(dbc: Dbc) => {
   for (const redditPost of posts) {
     setTimeout(async() => {
       await postRedditPostToBluesky(redditPost);
+      insertRedditPostToDb(dbc, redditPost);
       worldNewsLogger.log(
         `Posted the following thread with ID ${redditPost.id}: ${redditPost.title.slice(0, 200)}`
       );

@@ -44,7 +44,7 @@ export type CongressBillActionsRow = {
 };
 
 export type RedditWorldnewsPostsRow = {
-  id: number;
+  id?: number;
   redditPostId: string;
   permalink: string;
   blueskyPostTime: string;

@@ -65,3 +65,7 @@ export function truncateText(text: string, length = 250) {
 export const IS_DEV = () => {
   return fetchSecret("ENVIRONMENT") === "dev";
 }
+
+const IMAGE_FILE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif"];
+export const doesFileHaveImageExtension = (fileName: string) =>
+  IMAGE_FILE_EXTENSIONS.some(ext => fileName.endsWith(ext));
