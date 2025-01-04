@@ -1,4 +1,3 @@
-import { DatabaseSync } from 'node:sqlite';
 import { 
   fetchSecret, 
   IS_DEV, 
@@ -9,6 +8,7 @@ import { postToBluesky } from 'src/Bluesky';
 import { DataSourceContext } from 'src/Constants';
 import moment from 'moment-timezone';
 import { Logger } from 'src/Logger';
+import { Dbc } from 'src/db/Dbc';
 
 // These need to be loaded in every module that fetches 
 // a secret at runtime.
@@ -137,7 +137,7 @@ const postRedditPostToBluesky = async(redditPost: RedditPost) => {
   );
 }
 
-export const maybePullPostsFromRedditWorldNews = async(dbc: DatabaseSync) => {
+export const maybePullPostsFromRedditWorldNews = async(dbc: Dbc) => {
   /**
    * Unlike CongressSecretFetcher, RedditFetcher needs to be
    * destroyed and recreated whenever this function is called

@@ -1,12 +1,12 @@
-import { DatabaseSync } from "node:sqlite";
+import * as sqlite3 from "sqlite3";
 
 const DATABASE_FILE_PATH = "brinet.db";
-const database = new DatabaseSync(DATABASE_FILE_PATH);
+export type Dbc = sqlite3.Database;
 
 export const withDbc = async <T>(
-  fn: (dbc: DatabaseSync) => Promise<T>
+  fn: (dbc: Dbc) => Promise<T>
 ): Promise<T> => {
-  database.open();
+  const database = new sqlite3.Database(DATABASE_FILE_PATH);
   const returnValue = await fn(database);
   database.close();
   return returnValue;
