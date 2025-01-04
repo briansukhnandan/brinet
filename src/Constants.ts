@@ -49,3 +49,5 @@ export type RedditWorldnewsPostsRow = {
   permalink: string;
   blueskyPostTime: string;
 };
+
+export type Nullable<T> = T | null;

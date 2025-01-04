@@ -1,4 +1,4 @@
-import { DatabaseSync } from "node:sqlite";
+import { Dbc } from "src/db/Dbc";
 import moment from "moment-timezone";
 import {
   fetchSecret,
@@ -8,7 +8,10 @@ import {
   truncateText
 } from "../Util";
 import { postToBluesky } from "../Bluesky";
-import { DataSourceContext } from "../Constants";
+import {
+  CongressBillActionsRow,
+  DataSourceContext
+} from "../Constants";
 import { Logger } from "src/Logger";
 
 // These need to be loaded in every module that fetches 
@@ -165,6 +168,30 @@ const mapBillInfoToSummaries = (
 const getBillUrlForViewer = (bill: CongressBillFieldsOfInterest) =>
   `https://www.congress.gov/bill/${numWithOrdinalSuffix(bill.congress)}-congress/${bill.originChamber === "House" ? "house" : "senate"}-bill/${bill.number}`;
 
+const insertBillInfoToDb = (dbc: Dbc, bill: CongressBillFieldsOfInterest) => {
+  const billToInsert: CongressBillActionsRow = {
+    billNumber: bill.number,
+    congressNumber: bill.congress,
+    billUpdateDate: bill.updateDate,
+    blueskyPostTime: moment().tz("America/New_York").format("YYYY-MM-DD HH:mm:ss")
+  };
+  const q = `
+    INSERT INTO congress_bill_actions (
+      bill_number, 
+      congress_number, 
+      bill_update_date, 
+      bluesky_post_time
+    ) VALUES (?, ?, ?, ?)
+  `;
+  dbc.run(
+    q,
+    billToInsert.billNumber,
+    billToInsert.congressNumber,
+    billToInsert.billUpdateDate,
+    billToInsert.blueskyPostTime
+  );
+}
+
 const postBillToBluesky = async(bill: CongressBillFieldsOfInterest) => {
   let parentPostText = `Action on Bill: ${bill.number} - ${getBillUrlForViewer(bill)}\n\n`;
   const paddedTitle = truncateText(bill.title, 175); 
@@ -215,7 +242,7 @@ const postBillToBluesky = async(bill: CongressBillFieldsOfInterest) => {
   );
 }
 
-export const maybeKickOffCongressFeed = async(dbc: DatabaseSync) => {
+export const maybeKickOffCongressFeed = async(dbc: Dbc) => {
   const bills = await getBillsOp({
     limit: 20,
     sort: "updateDate+desc",
@@ -249,6 +276,7 @@ export const maybeKickOffCongressFeed = async(dbc: DatabaseSync) => {
   for (const billToPost of billsToPost) {
     setTimeout(async() => {
       await postBillToBluesky(billToPost);
+      insertBillInfoToDb(dbc, billToPost);
       congressLogger.log(
         `Posted the following bill: ${billToPost.title.slice(0, 200)}`
       );
