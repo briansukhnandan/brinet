@@ -34,3 +34,18 @@ export const contextToBlueskySecretKeys: Record<
     password: "REDDIT_WORLDNEWS_BLUESKY_PASSWORD"
   }
 };
+
+export type CongressBillActionsRow = {
+  id?: number; // Auto-incrementing
+  billNumber: string;
+  congressNumber: number;
+  billUpdateDate: string;
+  blueskyPostTime: string;
+};
+
+export type RedditWorldnewsPostsRow = {
+  id: number;
+  redditPostId: string;
+  permalink: string;
+  blueskyPostTime: string;
+};
