@@ -26,7 +26,9 @@ export const withDbc = async <T>(
    * There seems to be an issue with sqlite3 where
    * db.close() is being called before db.serialize(),
    * and thus immediately terminating the connection.
-   * Doesn't seem to be an issue for now.
+   *
+   * Doesn't seem to be an issue for now, and from minimal
+   * research the Dbc will be automatically garbage collected.
    */
   let returnValue = null;
   db.serialize(async() => {
