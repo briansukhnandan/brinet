@@ -1,8 +1,12 @@
+import fs from "fs";
 import * as sqlite3 from "sqlite3";
 import { Nullable } from "src/Constants";
 
 const DATABASE_FILE_PATH = "./src/db/brinet.db";
 export type Dbc = sqlite3.Database;
+
+export const wasDbInitialized =
+  fs.existsSync(DATABASE_FILE_PATH);
 
 export const withDbc = async <T>(
   fn: (dbc: Dbc) => Promise<T>
