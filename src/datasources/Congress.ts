@@ -10,7 +10,7 @@ import {
 import { postToBluesky } from "../Bluesky";
 import {
   CongressBillActionsRow,
-  DataSourceContext
+  Context
 } from "../Constants";
 import { Logger } from "src/Logger";
 
@@ -30,7 +30,7 @@ class CongressSecretFetcher {
 }
 
 const secretFetcher = new CongressSecretFetcher();
-const congressLogger = new Logger(DataSourceContext.CONGRESS);
+const congressLogger = new Logger(Context.CONGRESS);
 
 const BASE_URL = "https://api.congress.gov/v3";
 const urlForRequest = (
@@ -207,7 +207,7 @@ const postBillToBluesky = async(bill: CongressBillFieldsOfInterest) => {
 
   const rootPost = await postToBluesky(
     { text: parentPostText },
-    DataSourceContext.CONGRESS
+    Context.CONGRESS
   );
 
   const summaryText = bill.summary.text;
@@ -220,7 +220,7 @@ const postBillToBluesky = async(bill: CongressBillFieldsOfInterest) => {
         parent: rootPost,
       }
     },
-    DataSourceContext.CONGRESS
+    Context.CONGRESS
   );
 
   let sponsorsReplyText = "Sponsors of this Bill:\n";
@@ -238,7 +238,7 @@ const postBillToBluesky = async(bill: CongressBillFieldsOfInterest) => {
         parent: summaryReplyPost,
       }
     },
-    DataSourceContext.CONGRESS
+    Context.CONGRESS
   );
 }
 

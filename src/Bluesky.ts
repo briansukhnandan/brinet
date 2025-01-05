@@ -1,5 +1,8 @@
 import { AtpAgent, RichText } from '@atproto/api';
-import { contextToBlueskySecretKeys, DataSourceContext } from './Constants';
+import {
+  dataSourceContextToBlueskySecretKeys, 
+  DataSourceContext
+} from './Constants';
 import { fetchSecret } from './Util';
 import { Record } from '@atproto/api/dist/client/types/app/bsky/feed/post';
 
@@ -13,14 +16,14 @@ function fetchBlueskyCredsFromContext(
   identifier: string;
   password: string;
 } {
-  if (!contextToBlueskySecretKeys[context]) {
+  if (!dataSourceContextToBlueskySecretKeys[context]) {
     throw new Error("Did not find secret pair for given context!");
   }
 
   const {
     identifier: identifierSecret, 
     password: passwordSecret
-  } = contextToBlueskySecretKeys[context];
+  } = dataSourceContextToBlueskySecretKeys[context];
 
   return {
     identifier: fetchSecret(identifierSecret),

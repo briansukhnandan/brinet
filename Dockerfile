@@ -1,8 +1,8 @@
 FROM node:22.12
 
-RUN mkdir -p /brinet
-COPY . /brinet
-WORKDIR /brinet
+RUN mkdir -p /brinet-src
+COPY . /brinet-src
+WORKDIR /brinet-src
 
-RUN npm install
-CMD ["npx", "tsx", "/brinet/src/index.ts"]
+RUN npm ci
+CMD ["npm", "run", "start"]

@@ -6,7 +6,7 @@ import {
   truncateText 
 } from 'src/Util';
 import { postToBluesky } from 'src/Bluesky';
-import { DataSourceContext, RedditWorldnewsPostsRow } from 'src/Constants';
+import { Context, RedditWorldnewsPostsRow } from 'src/Constants';
 import moment from 'moment-timezone';
 import { Logger } from 'src/Logger';
 import { Dbc } from 'src/db/Dbc';
@@ -18,7 +18,7 @@ dotenv.config();
 
 const TOKEN_BASE_URL = 'https://www.reddit.com/api/v1/access_token'
 const API_BASE_URL = 'https://oauth.reddit.com';
-const worldNewsLogger = new Logger(DataSourceContext.WORLDNEWS);
+const worldNewsLogger = new Logger(Context.WORLDNEWS);
 
 class RedditFetcher {
   private accessToken: string;
@@ -124,7 +124,7 @@ const postRedditPostToBluesky = async(redditPost: RedditPost) => {
       text: rootPostText, 
       image: thumbnailBlob,
     },
-    DataSourceContext.WORLDNEWS
+    Context.WORLDNEWS
   );
 
   let replyText = "Link to post:"
@@ -137,7 +137,7 @@ const postRedditPostToBluesky = async(redditPost: RedditPost) => {
         parent: rootPost,
       },
     },
-    DataSourceContext.WORLDNEWS
+    Context.WORLDNEWS
   );
 }
 
