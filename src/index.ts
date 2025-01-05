@@ -6,7 +6,7 @@ import { Logger } from './Logger';
 import { Context } from './Constants';
 
 const systemLogger = new Logger(Context.SYSTEM);
-async function kickOffJobs() {
+async function kickOffBlueskyJobs() {
   if (!wasDbInitialized) {
     throw new Error(
       "DB was not initialized. Please run `db/bootstrap_db.sh`!"
@@ -26,5 +26,5 @@ async function kickOffJobs() {
 }
 
 const cronEveryMidnight = '0 0 * * *'; // Every day at midnight
-const MainJob = new CronJob(cronEveryMidnight, kickOffJobs);
-MainJob.start();
+const BlueskyJob = new CronJob(cronEveryMidnight, kickOffBlueskyJobs);
+BlueskyJob.start();
