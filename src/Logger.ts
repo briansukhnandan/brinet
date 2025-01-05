@@ -20,7 +20,7 @@ export class Logger {
     // Strip trailing slash from secret if it exists
     const writePathSecret = contextToLogPath[context];
     this.writePath = writePathSecret.at(-1) === "/"
-      ? writePathSecret.slice(0, writePathSecret.length - 1)
+      ? writePathSecret.slice(0, -1)
       : writePathSecret;
     this.context = context;
 
