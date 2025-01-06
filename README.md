@@ -22,4 +22,5 @@ npm run start
 Generate a container called `brinet` and then run it:
 ```
 docker build -t brinet .
+docker run -it brinet
 ```
