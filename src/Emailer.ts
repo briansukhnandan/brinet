@@ -51,15 +51,15 @@ export class Emailer {
 
     Client.send(msg)
       .then((res) => {
-        console.log(res[0].statusCode);
-        console.log(res[0].headers);
+        if ([200, 202].includes(res[0].statusCode)) {
+          systemLogger.log(
+            `Successfully sent email for date ${getCurrentDate()}!`
+          );
+        }
       })
       .catch((error) => {
         console.error(error);
       });
-    systemLogger.log(
-      `Successfully sent email for date ${getCurrentDate()}!`
-    );
   }
 }
 
