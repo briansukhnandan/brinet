@@ -17,3 +17,9 @@ You should then be able to run `brinet` locally with the following command from 
 ```
 npm run start
 ```
+
+### Running with Docker
+Generate a container called `brinet` and then run it:
+```
+docker build -t brinet .
+```
