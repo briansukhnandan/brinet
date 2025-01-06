@@ -1,3 +1,8 @@
+export const cronEveryMidnight = '0 0 * * *';
+export const cronEvery1AM = "0 1 * * *";
+export const cronEveryMinute = "* * * * *";
+export const cronEveryTwoMinutes = "*/2 * * * *";
+
 export enum Context {
   CONGRESS = "CONGRESS",
   WORLDNEWS = "WORLDNEWS",
@@ -5,7 +10,7 @@ export enum Context {
 };
 export type DataSourceContext = Context.CONGRESS | Context.WORLDNEWS;
 
-const GLOBAL_LOGS_DIRECTORY = "./src/logs"
+export const GLOBAL_LOGS_DIRECTORY = "./src/logs"
 export const contextToLogPath = {
   [Context.CONGRESS]: `${GLOBAL_LOGS_DIRECTORY}/CONGRESS_API_LOGS.txt`,
   [Context.WORLDNEWS]: `${GLOBAL_LOGS_DIRECTORY}/REDDIT_WORLDNEWS_LOGS.txt`,

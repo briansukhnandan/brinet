@@ -3,9 +3,17 @@ import { maybeKickOffCongressFeed } from './datasources/Congress';
 import { maybePullPostsFromRedditWorldNews } from './datasources/Reddit';
 import { wasDbInitialized, withDbc } from './db/Dbc';
 import { Logger } from './Logger';
-import { Context } from './Constants';
+import {
+  Context,
+  contextToLogPath,
+  cronEvery1AM,
+  cronEveryMidnight
+} from './Constants';
+import { Emailer } from './Emailer';
+import { getCurrentDate } from './Util';
 
 const systemLogger = new Logger(Context.SYSTEM);
+
 async function kickOffBlueskyJobs() {
   if (!wasDbInitialized) {
     throw new Error(
@@ -25,6 +33,18 @@ async function kickOffBlueskyJobs() {
   });
 }
 
-const cronEveryMidnight = '0 0 * * *'; // Every day at midnight
+async function kickOffEmailJob() {
+  const emailer = new Emailer();
+  emailer.sendEmail(
+    `Log files for ${getCurrentDate()}`,
+    "Please see the attached files:",
+    Object.values(contextToLogPath),
+  );
+  systemLogger.log(`Sent email for ${getCurrentDate()}`);
+}
+
 const BlueskyJob = new CronJob(cronEveryMidnight, kickOffBlueskyJobs);
+const EmailJob = new CronJob(cronEvery1AM, kickOffEmailJob);
+
 BlueskyJob.start();
+EmailJob.start();

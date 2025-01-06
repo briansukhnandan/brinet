@@ -2,6 +2,7 @@ import { Dbc } from "src/db/Dbc";
 import moment from "moment-timezone";
 import {
   fetchSecret,
+  getCurrentDate,
   handlePromiseAllSettled,
   numWithOrdinalSuffix,
   prepareObjForRequest,
@@ -247,11 +248,8 @@ export const maybeKickOffCongressFeed = async(dbc: Dbc) => {
     limit: 20,
     sort: "updateDate+desc",
   });
-  const todaysDate = moment()
-    .tz("America/New_York")
-    .format("YYYY-MM-DD");
   const billsActionedToday = bills.filter(
-    bill => bill.updateDate === todaysDate
+    bill => bill.updateDate === getCurrentDate()
   );
   if (!billsActionedToday.length) return;
 

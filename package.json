@@ -11,6 +11,7 @@
   "description": "",
   "dependencies": {
     "@atproto/api": "^0.13.23",
+    "@sendgrid/mail": "^8.1.4",
     "@types/node": "^22.10.2",
     "cron": "^3.3.2",
     "dotenv": "^16.4.7",

@@ -1,3 +1,5 @@
+import moment from "moment-timezone";
+
 export const fetchSecret = (secretName: string): string => {
   const secret = process.env[secretName];
   if (!secret) {
@@ -61,6 +63,35 @@ export function truncateText(text: string, length = 250) {
   if (text.length <= length) return text;
   return `${text.slice(0, length - 3)}...`;
 }
+
+export function baseFileName(pathToFile: string) {
+  const split = pathToFile.split("/");
+  if (!split.length) {
+    throw new Error("Could not split by / character.");
+  }
+  return split.at(-1) as string;
+}
+
+export function getFileExtension(fileName: string): string {
+  const split = fileName.split(".");
+  if (!split.length) {
+    throw new Error("Could not split by period!");
+  }
+  return split.at(-1) as string;
+}
+export function getMimeTypeFromFileExt(ext: string) {
+  const mimeType = {
+    "txt": "text/html",
+    "pdf": "application/pdf",
+  }[ext];
+  if (!mimeType) {
+    throw new Error(`Could not fetch mimetype for extension ${ext}!`);
+  }
+  return mimeType;
+}
+
+export const getCurrentDate = () =>
+  moment().tz("America/New_York").format("YYYY-MM-DD");
 
 export const IS_DEV = () => {
   return fetchSecret("ENVIRONMENT") === "dev";
