@@ -5,7 +5,7 @@ These data sources include:
 - Actions on Bills in the US Congress
 - Reddit r/worldnews
 
-To setup, PTAL at, fill out, and rename `.env-template` to `.env`.
+To setup, PTAL at, fill out, and rename `.env-template` to `.env`. Be sure to also set `ENVIRONMENT` to `"prod"`
 Then, setup the DB by running the bootstrap script by running the following from the root of the project:
 ```
 chmod +x ./src/db/bootstrap_db.sh
