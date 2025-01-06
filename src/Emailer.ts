@@ -1,9 +1,14 @@
 import fs from "fs";
 import Client from "@sendgrid/mail";
-import { baseFileName, fetchSecret, getCurrentDate, getFileExtension, getMimeTypeFromFileExt } from "./Util";
+import {
+  baseFileName,
+  fetchSecret,
+  getCurrentDate,
+  getFileExtension,
+  getMimeTypeFromFileExt
+} from "./Util";
 import { Logger } from "./Logger";
 import { Context } from "./Constants";
-import moment from "moment-timezone";
 
 /** From email must be configured on SendGrid. */
 const FROM_EMAIL = "briansukhnandan@gmail.com";
