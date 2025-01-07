@@ -1,4 +1,4 @@
-export const cronEveryMidnight = '0 0 * * *';
+export const cronEvery11PM = '0 23 * * *';
 export const cronEvery1AM = "0 1 * * *";
 export const cronEveryMinute = "* * * * *";
 export const cronEveryTwoMinutes = "*/2 * * * *";

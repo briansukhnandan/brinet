@@ -7,7 +7,7 @@ import {
   Context,
   contextToLogPath,
   cronEvery1AM,
-  cronEveryMidnight
+  cronEvery11PM
 } from './Constants';
 import { Emailer } from './Emailer';
 import { getCurrentDate } from './Util';
@@ -45,7 +45,7 @@ async function kickOffEmailJob() {
 }
 
 const BlueskyJob = new CronJob(
-  cronEveryMidnight, 
+  cronEvery11PM, 
   kickOffBlueskyJobs, 
   null, 
   false, 
