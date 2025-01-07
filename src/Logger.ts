@@ -8,10 +8,11 @@ import {
 // These need to be loaded in every module that fetches 
 // a secret at runtime.
 import dotenv from 'dotenv';
+import { getCurrentTime } from "./Util";
 dotenv.config();
 
 const formatMsgForLogging = (msg: string, context: Context)  =>
-  `[${moment().format("YYYY-MM-DD HH:mm:ss")}][${context}] ${msg}`;
+  `[${getCurrentTime()}][${context}] ${msg}`;
 
 export class Logger {
   private writePath: string;

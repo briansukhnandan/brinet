@@ -92,6 +92,8 @@ export function getMimeTypeFromFileExt(ext: string) {
 
 export const getCurrentDate = () =>
   moment().tz("America/New_York").format("YYYY-MM-DD");
+export const getCurrentTime = () =>
+  moment().tz("America/New_York").format("YYYY-MM-DD HH:mm:ss");
 
 export const IS_DEV = () => {
   return fetchSecret("ENVIRONMENT") === "dev";

@@ -1,6 +1,7 @@
 import { 
   doesFileHaveImageExtension,
   fetchSecret, 
+  getCurrentTime, 
   IS_DEV, 
   prepareObjForRequest, 
   truncateText 
@@ -151,7 +152,7 @@ const insertRedditPostToDb = (dbc: Dbc, redditPost: RedditPost) => {
   const postToInsert: RedditWorldnewsPostsRow = {
     permalink: redditPost.permalink,
     redditPostId: redditPost.id,
-    blueskyPostTime: moment().tz("America/New_York").format("YYYY-MM-DD HH:mm:ss")
+    blueskyPostTime: getCurrentTime(),
   };
   const q = `
     INSERT INTO reddit_worldnews_posts (

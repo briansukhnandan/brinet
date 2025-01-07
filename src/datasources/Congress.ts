@@ -3,6 +3,7 @@ import moment from "moment-timezone";
 import {
   fetchSecret,
   getCurrentDate,
+  getCurrentTime,
   handlePromiseAllSettled,
   numWithOrdinalSuffix,
   prepareObjForRequest,
@@ -174,7 +175,7 @@ const insertBillInfoToDb = (dbc: Dbc, bill: CongressBillFieldsOfInterest) => {
     billNumber: bill.number,
     congressNumber: bill.congress,
     billUpdateDate: bill.updateDate,
-    blueskyPostTime: moment().tz("America/New_York").format("YYYY-MM-DD HH:mm:ss")
+    blueskyPostTime: getCurrentTime(),
   };
   const q = `
     INSERT INTO congress_bill_actions (
