@@ -31,6 +31,7 @@ async function kickOffBlueskyJobs() {
     await maybePullPostsFromRedditWorldNews(dbc);
     systemLogger.log("Ending Reddit Worldnews Feed!");
   });
+  systemLogger.log("Finished Bluesky jobs...");
 }
 
 async function kickOffEmailJob() {
