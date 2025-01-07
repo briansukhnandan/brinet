@@ -110,7 +110,8 @@ const postRedditPostToBluesky = async(redditPost: RedditPost) => {
   let rootPostText = "";
   rootPostText += `Posted on ${
     moment(redditPost.created_utc * 1000).tz("America/New_York").format("lll")
-  }\n\n${truncateText(redditPost.title, 150)}`;
+  }\n\n${truncateText(redditPost.title, 150)}`.slice(0, 275);
+
   let thumbnailBlob: Blob | undefined; 
   if (
     redditPost.thumbnail && 
@@ -119,26 +120,31 @@ const postRedditPostToBluesky = async(redditPost: RedditPost) => {
     thumbnailBlob = await fetchBlobFromRedditLink(redditPost.thumbnail);
   }
 
-  const rootPost = await postToBluesky(
-    { 
-      text: rootPostText, 
-      image: thumbnailBlob,
-    },
-    Context.WORLDNEWS
-  );
-
-  let replyText = "Link to post:"
-  await postToBluesky(
-    {
-      text: replyText,
-      link: `https://reddit.com${redditPost.permalink}`,
-      reply: {
-        root: rootPost,
-        parent: rootPost,
+  try {
+    const rootPost = await postToBluesky(
+      { 
+        text: rootPostText, 
+        image: thumbnailBlob,
       },
-    },
-    Context.WORLDNEWS
-  );
+      Context.WORLDNEWS
+    );
+
+    await postToBluesky(
+      {
+        text: "Link to post:",
+        link: `https://reddit.com${redditPost.permalink}`,
+        reply: {
+          root: rootPost,
+          parent: rootPost,
+        },
+      },
+      Context.WORLDNEWS
+    );
+  } catch(e) {
+    if (e?.message) {
+      worldNewsLogger.log(e.message);
+    }
+  }
 }
 
 const insertRedditPostToDb = (dbc: Dbc, redditPost: RedditPost) => {

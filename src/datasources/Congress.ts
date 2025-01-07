@@ -206,41 +206,47 @@ const postBillToBluesky = async(bill: CongressBillFieldsOfInterest) => {
     moment(bill.updateDate).format("lll")
     +"\n";
 
-  const rootPost = await postToBluesky(
-    { text: parentPostText },
-    Context.CONGRESS
-  );
+  try {
+    const rootPost = await postToBluesky(
+      { text: parentPostText },
+      Context.CONGRESS
+    );
 
-  const summaryText = bill.summary.text;
-  const summaryReplyText = truncateText(summaryText, 300);
-  const summaryReplyPost = await postToBluesky(
-    { 
-      text: summaryReplyText, 
-      reply: {
-        root: rootPost,
-        parent: rootPost,
+    const summaryText = bill.summary.text;
+    const summaryReplyText = truncateText(summaryText, 300);
+    const summaryReplyPost = await postToBluesky(
+      { 
+        text: summaryReplyText, 
+        reply: {
+          root: rootPost,
+          parent: rootPost,
+        }
+      },
+      Context.CONGRESS
+    );
+
+    let sponsorsReplyText = "Sponsors of this Bill:\n";
+    for (const sponsor of bill.sponsors) {
+      if (sponsorsReplyText.length < 250) {
+        sponsorsReplyText += `- ${sponsor.fullName}\n`;
       }
-    },
-    Context.CONGRESS
-  );
+    }
 
-  let sponsorsReplyText = "Sponsors of this Bill:\n";
-  for (const sponsor of bill.sponsors) {
-    if (sponsorsReplyText.length < 250) {
-      sponsorsReplyText += `- ${sponsor.fullName}\n`;
+    await postToBluesky(
+      {
+        text: sponsorsReplyText,
+        reply: {
+          root: rootPost,
+          parent: summaryReplyPost,
+        }
+      },
+      Context.CONGRESS
+    );
+  } catch(e) {
+    if (e?.message) {
+      congressLogger.log(`Ran into error posting bill: ${bill.number}`);
     }
   }
-
-  await postToBluesky(
-    {
-      text: sponsorsReplyText,
-      reply: {
-        root: rootPost,
-        parent: summaryReplyPost,
-      }
-    },
-    Context.CONGRESS
-  );
 }
 
 export const maybeKickOffCongressFeed = async(dbc: Dbc) => {

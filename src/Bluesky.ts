@@ -3,7 +3,7 @@ import {
   dataSourceContextToBlueskySecretKeys, 
   DataSourceContext
 } from './Constants';
-import { fetchSecret } from './Util';
+import { fetchSecret, truncateText } from './Util';
 import { Record } from '@atproto/api/dist/client/types/app/bsky/feed/post';
 
 const agent = new AtpAgent({
@@ -54,9 +54,16 @@ export const postToBluesky = async(
   const { identifier, password } = fetchBlueskyCredsFromContext(context);
   await agent.login({ identifier, password });
   
-  let textToUse: string = post.text;
+  let textToUse: string = truncateText(post.text, 150);
   let facets = null;
   if (post.link) {
+    if (post.link.length > 150) {
+      textToUse = textToUse.slice(
+        0, 
+        textToUse.length - 1 - post.link.length
+      );
+    }
+
     const rt = new RichText({
       text: `${textToUse}\n${post.link}`,
     });

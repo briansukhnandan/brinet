@@ -43,8 +43,20 @@ async function kickOffEmailJob() {
   systemLogger.log(`Sent email for ${getCurrentDate()}`);
 }
 
-const BlueskyJob = new CronJob(cronEveryMidnight, kickOffBlueskyJobs);
-const EmailJob = new CronJob(cronEvery1AM, kickOffEmailJob);
+const BlueskyJob = new CronJob(
+  cronEveryMidnight, 
+  kickOffBlueskyJobs, 
+  null, 
+  false, 
+  "America/New_York"
+);
+const EmailJob = new CronJob(
+  cronEvery1AM, 
+  kickOffEmailJob, 
+  null, 
+  false, 
+  "America/New_York"
+);
 
 BlueskyJob.start();
 EmailJob.start();
