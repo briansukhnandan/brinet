@@ -156,7 +156,7 @@ const mapBillInfoToSummaries = (
       summary,
       sponsors: billInfo.sponsors,
       congress: billInfo.congress,
-      policyArea: billInfo.policyArea.name,
+      policyArea: billInfo.policyArea?.name ?? "Not Available",
       title: billInfo.title,
       updateDate: billInfo.updateDate,
       introducedDate: billInfo.introducedDate,

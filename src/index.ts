@@ -23,13 +23,23 @@ async function kickOffBlueskyJobs() {
 
   systemLogger.log("Kicking off jobs...");
   await withDbc(async(dbc) => {
-    systemLogger.log("Starting Congress Feed!");
-    await maybeKickOffCongressFeed(dbc);
-    systemLogger.log("Finished Congress Feed!");
+    try {
+      systemLogger.log("Starting Congress Feed!");
+      await maybeKickOffCongressFeed(dbc);
+      systemLogger.log("Finished Congress Feed!");
+    } catch(e) {
+      systemLogger.log(`Ran into error posting Congress feed!`);
+      console.error(e);
+    }
 
-    systemLogger.log("Starting Reddit Worldnews Feed!");
-    await maybePullPostsFromRedditWorldNews(dbc);
-    systemLogger.log("Ending Reddit Worldnews Feed!");
+    try {
+      systemLogger.log("Starting Reddit Worldnews Feed!");
+      await maybePullPostsFromRedditWorldNews(dbc);
+      systemLogger.log("Ending Reddit Worldnews Feed!");
+    } catch(e) {
+      systemLogger.log(`Ran into error posting Reddit r/worldnews feed!`);
+      console.error(e);
+    }
   });
   systemLogger.log("Finished Bluesky jobs...");
 }
