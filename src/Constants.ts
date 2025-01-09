@@ -1,5 +1,8 @@
-export const cronEvery11PM = '0 23 * * *';
+export const cronEvery6PM = '0 18 * * *';
+export const cronEvery6AM = '0 6 * * *';
 export const cronEvery1AM = "0 1 * * *";
+
+// For testing
 export const cronEveryMinute = "* * * * *";
 export const cronEveryTwoMinutes = "*/2 * * * *";
 
@@ -50,3 +53,4 @@ export type RedditWorldnewsPostsRow = {
 };
 
 export type Nullable<T> = T | null;
+export type MaybePromise<T> = T | Promise<T>;
