@@ -1,0 +1,3 @@
+- Bluesky Agent refactor (avoid rate-limiting)
+- Bluesky text proper splitting instead of truncation
+- Readable bill information on Congress bot (AI Summary?)
