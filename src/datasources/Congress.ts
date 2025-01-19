@@ -9,7 +9,7 @@ import {
   prepareObjForRequest,
   truncateText
 } from "../Util";
-import { postToBluesky } from "../Bluesky";
+import { BlueskyClient } from "../Bluesky";
 import {
   CongressBillActionsRow,
   Context
@@ -194,7 +194,10 @@ const insertBillInfoToDb = (dbc: Dbc, bill: CongressBillFieldsOfInterest) => {
   );
 }
 
-const postBillToBluesky = async(bill: CongressBillFieldsOfInterest) => {
+const postBillToBluesky = async(
+  bill: CongressBillFieldsOfInterest,
+  agent: BlueskyClient
+) => {
   let parentPostText = `Action on Bill: ${bill.number} - ${getBillUrlForViewer(bill)}\n\n`;
   const paddedTitle = truncateText(bill.title, 175); 
   parentPostText += paddedTitle+"\n\n";
@@ -208,14 +211,10 @@ const postBillToBluesky = async(bill: CongressBillFieldsOfInterest) => {
     +"\n";
 
   try {
-    const rootPost = await postToBluesky(
-      { text: parentPostText },
-      Context.CONGRESS
-    );
-
+    const rootPost = await agent.postToBluesky({ text: parentPostText });
     const summaryText = bill.summary.text;
     const summaryReplyText = truncateText(summaryText, 300);
-    const summaryReplyPost = await postToBluesky(
+    const summaryReplyPost = await agent.postToBluesky(
       { 
         text: summaryReplyText, 
         reply: {
@@ -223,7 +222,6 @@ const postBillToBluesky = async(bill: CongressBillFieldsOfInterest) => {
           parent: rootPost,
         }
       },
-      Context.CONGRESS
     );
 
     let sponsorsReplyText = "Sponsors of this Bill:\n";
@@ -233,7 +231,7 @@ const postBillToBluesky = async(bill: CongressBillFieldsOfInterest) => {
       }
     }
 
-    await postToBluesky(
+    await agent.postToBluesky(
       {
         text: sponsorsReplyText,
         reply: {
@@ -241,7 +239,6 @@ const postBillToBluesky = async(bill: CongressBillFieldsOfInterest) => {
           parent: summaryReplyPost,
         }
       },
-      Context.CONGRESS
     );
   } catch(e) {
     if (e?.message) {
@@ -250,7 +247,7 @@ const postBillToBluesky = async(bill: CongressBillFieldsOfInterest) => {
   }
 }
 
-export const maybeKickOffCongressFeed = async(dbc: Dbc) => {
+export const maybeKickOffCongressFeed = async(dbc: Dbc, agent: BlueskyClient) => {
   const bills = await getBillsOp({
     limit: 20,
     sort: "updateDate+desc",
@@ -280,7 +277,7 @@ export const maybeKickOffCongressFeed = async(dbc: Dbc) => {
   const billsToPost = mapBillInfoToSummaries(billInfos, billSummaries);
   for (const billToPost of billsToPost) {
     setTimeout(async() => {
-      await postBillToBluesky(billToPost);
+      await postBillToBluesky(billToPost, agent);
       insertBillInfoToDb(dbc, billToPost);
       congressLogger.log(
         `Posted the following bill: ${billToPost.title.slice(0, 200)}`

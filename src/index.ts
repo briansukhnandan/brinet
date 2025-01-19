@@ -9,17 +9,26 @@ import {
   cronEvery1AM,
   cronEvery6AM,
   cronEvery6PM,
+  DataSourceContext,
   MaybePromise
 } from './Constants';
 import { Emailer } from './Emailer';
 import { getCurrentDate } from './Util';
+import { BlueskyClient } from './Bluesky';
 
 const systemLogger = new Logger(Context.SYSTEM);
+const agentsByContext: Record<DataSourceContext, BlueskyClient> = {
+  [Context.WORLDNEWS]: new BlueskyClient(Context.WORLDNEWS),
+  [Context.CONGRESS]: new BlueskyClient(Context.CONGRESS),
+};
+
 async function kickOffCongressBillFeed() {
+  const agent = agentsByContext[Context.CONGRESS];
+  await agent.prepareAgent();
   await withDbc(async(dbc) => {
     try {
       systemLogger.log("Starting Congress Feed!");
-      await maybeKickOffCongressFeed(dbc);
+      await maybeKickOffCongressFeed(dbc, agent);
       systemLogger.log("Finished Congress Feed!");
     } catch(e) {
       systemLogger.log(`Ran into error posting Congress feed!`);
@@ -28,10 +37,12 @@ async function kickOffCongressBillFeed() {
   });
 }
 async function kickOffRedditWorldnewsFeed() {
+  const agent = agentsByContext[Context.WORLDNEWS];
+  await agent.prepareAgent();
   await withDbc(async(dbc) => {
     try {
       systemLogger.log("Starting Reddit Worldnews Feed!");
-      await maybePullPostsFromRedditWorldNews(dbc);
+      await maybePullPostsFromRedditWorldNews(dbc, agent);
       systemLogger.log("Ending Reddit Worldnews Feed!");
     } catch(e) {
       systemLogger.log(`Ran into error posting Reddit r/worldnews feed!`);

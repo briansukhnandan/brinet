@@ -6,7 +6,7 @@ import {
   prepareObjForRequest, 
   truncateText 
 } from 'src/Util';
-import { postToBluesky } from 'src/Bluesky';
+import { BlueskyClient } from 'src/Bluesky';
 import { Context, RedditWorldnewsPostsRow } from 'src/Constants';
 import moment from 'moment-timezone';
 import { Logger } from 'src/Logger';
@@ -107,7 +107,7 @@ const fetchBlobFromRedditLink = async(link: string): Promise<Blob> => {
   return await res.blob();
 }
 
-const postRedditPostToBluesky = async(redditPost: RedditPost) => {
+const postRedditPostToBluesky = async(agent: BlueskyClient, redditPost: RedditPost) => {
   let rootPostText = "";
   rootPostText += `Posted on ${
     moment(redditPost.created_utc * 1000).tz("America/New_York").format("lll")
@@ -122,15 +122,14 @@ const postRedditPostToBluesky = async(redditPost: RedditPost) => {
   }
 
   try {
-    const rootPost = await postToBluesky(
+    const rootPost = await agent.postToBluesky(
       { 
         text: rootPostText, 
         image: thumbnailBlob,
       },
-      Context.WORLDNEWS
     );
 
-    await postToBluesky(
+    await agent.postToBluesky(
       {
         text: "Link to post:",
         link: `https://reddit.com${redditPost.permalink}`,
@@ -139,7 +138,6 @@ const postRedditPostToBluesky = async(redditPost: RedditPost) => {
           parent: rootPost,
         },
       },
-      Context.WORLDNEWS
     );
   } catch(e) {
     if (e?.message) {
@@ -169,7 +167,7 @@ const insertRedditPostToDb = (dbc: Dbc, redditPost: RedditPost) => {
   );
 }
 
-export const maybePullPostsFromRedditWorldNews = async(dbc: Dbc) => {
+export const maybePullPostsFromRedditWorldNews = async(dbc: Dbc, agent: BlueskyClient) => {
   /**
    * Unlike CongressSecretFetcher, RedditFetcher needs to be
    * destroyed and recreated whenever this function is called
@@ -182,7 +180,7 @@ export const maybePullPostsFromRedditWorldNews = async(dbc: Dbc) => {
   const posts = await redditFetcher.pullPostsFromRedditWorldNews();
   for (const redditPost of posts) {
     setTimeout(async() => {
-      await postRedditPostToBluesky(redditPost);
+      await postRedditPostToBluesky(agent, redditPost);
       insertRedditPostToDb(dbc, redditPost);
       worldNewsLogger.log(
         `Posted the following thread with ID ${redditPost.id}: ${redditPost.title.slice(0, 200)}`
