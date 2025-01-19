@@ -31,7 +31,7 @@ async function kickOffCongressBillFeed() {
       await maybeKickOffCongressFeed(dbc, agent);
       systemLogger.log("Finished Congress Feed!");
     } catch(e) {
-      systemLogger.log(`Ran into error posting Congress feed!`);
+      systemLogger.log("Ran into error posting Congress feed!");
       console.error(e);
     }
   });
@@ -45,19 +45,24 @@ async function kickOffRedditWorldnewsFeed() {
       await maybePullPostsFromRedditWorldNews(dbc, agent);
       systemLogger.log("Ending Reddit Worldnews Feed!");
     } catch(e) {
-      systemLogger.log(`Ran into error posting Reddit r/worldnews feed!`);
+      systemLogger.log("Ran into error posting Reddit r/worldnews feed!");
       console.error(e);
     }
   });
 }
 function kickOffEmailJob() {
   const emailer = new Emailer();
-  emailer.sendEmail(
-    `Log files for ${getCurrentDate()}`,
-    "Please see the attached files:",
-    Object.values(contextToLogPath),
-  );
-  systemLogger.log(`Sent email for ${getCurrentDate()}`);
+  try {
+    emailer.sendEmail(
+      `Log files for ${getCurrentDate()}`,
+      "Please see the attached files:",
+      Object.values(contextToLogPath),
+    );
+    systemLogger.log(`Sent email for ${getCurrentDate()}`);
+  } catch(e) {
+    systemLogger.log("Ran into error running email job!");
+    console.error(e);
+  }
 }
 
 const createCronJob = (
