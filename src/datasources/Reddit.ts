@@ -6,6 +6,7 @@ import {
   prepareObjForRequest, 
   truncateText 
 } from 'src/Util';
+import { parse } from "node-html-parser";
 import { BlueskyClient } from 'src/Bluesky';
 import { Context, RedditWorldnewsPostsRow } from 'src/Constants';
 import moment from 'moment-timezone';
@@ -17,6 +18,7 @@ import { Dbc } from 'src/db/Dbc';
 import dotenv from 'dotenv';
 dotenv.config();
 
+const redditUrlLink = (permalink: string) => `https://reddit.com${permalink}`;
 const TOKEN_BASE_URL = 'https://www.reddit.com/api/v1/access_token'
 const API_BASE_URL = 'https://oauth.reddit.com';
 const worldNewsLogger = new Logger(Context.WORLDNEWS);
@@ -107,31 +109,73 @@ const fetchBlobFromRedditLink = async(link: string): Promise<Blob> => {
   return await res.blob();
 }
 
+const fetchPostImageFromRedditPost = async(post: RedditPost): Promise<Blob | undefined> => {
+  let res = await fetch(redditUrlLink(post.permalink), {
+    method: "GET"
+  });
+
+  /** 
+   * If an image on the post exists, it's contained within
+   * an <img /> tag with the post-image id.
+   */
+  const html = await res.text();
+  const postImage = parse(html)
+    .querySelectorAll("img")
+    .find((img) => img.getAttribute("id") === "post-image");
+  const postImageSrc = postImage?.getAttribute("src");
+  if (!postImageSrc) {
+    worldNewsLogger.log(`Could not get post image for post ${post.id}.`);
+    return;
+  }
+
+  res = await fetch(postImageSrc, {
+    method: "GET"
+  });
+
+  const imgData = await res.arrayBuffer();
+  if (imgData.byteLength > 104_857_600) {
+    worldNewsLogger.log(
+      `Encountered image with size ${imgData.byteLength} which exceeds 100MB. Skipping`
+    );
+    return;
+  }
+
+  const imgBuffer = Buffer.from(imgData);
+  return new Blob([imgBuffer]);
+}
+
 const postRedditPostToBluesky = async(agent: BlueskyClient, redditPost: RedditPost) => {
   const redditPostDate = 
     moment(redditPost.created_utc * 1000).tz("America/New_York").format("YYYY-MM-DD");
   const rootPostText = `Posted on ${redditPostDate}\n\n${truncateText(redditPost.title, 270)}`;
 
-  let thumbnailBlob: Blob | undefined; 
-  if (
-    redditPost.thumbnail && 
-    doesFileHaveImageExtension(redditPost.thumbnail)
-  ) {
-    thumbnailBlob = await fetchBlobFromRedditLink(redditPost.thumbnail);
+  let imgBlob: Blob | undefined;
+  try {
+    imgBlob = await fetchPostImageFromRedditPost(redditPost);
+    if (
+      !imgBlob && 
+      redditPost.thumbnail && 
+      doesFileHaveImageExtension(redditPost.thumbnail)
+    ) {
+      imgBlob = await fetchBlobFromRedditLink(redditPost.thumbnail);
+    }
+  } catch(e) {
+    worldNewsLogger.log(`Failed to get post/thumbnail images for post ${redditPost.id}`);
   }
+
 
   try {
     const rootPost = await agent.postToBluesky(
       { 
         text: rootPostText, 
-        image: thumbnailBlob,
+        image: imgBlob,
       },
     );
 
     await agent.postToBluesky(
       {
         text: "Link to post:",
-        link: `https://reddit.com${redditPost.permalink}`,
+        link: redditUrlLink(redditPost.permalink),
         reply: {
           root: rootPost,
           parent: rootPost,
