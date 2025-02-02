@@ -108,10 +108,9 @@ const fetchBlobFromRedditLink = async(link: string): Promise<Blob> => {
 }
 
 const postRedditPostToBluesky = async(agent: BlueskyClient, redditPost: RedditPost) => {
-  let rootPostText = "";
-  rootPostText += `Posted on ${
-    moment(redditPost.created_utc * 1000).tz("America/New_York").format("lll")
-  }\n\n${truncateText(redditPost.title, 150)}`.slice(0, 275);
+  const redditPostDate = 
+    moment(redditPost.created_utc * 1000).tz("America/New_York").format("YYYY-MM-DD");
+  const rootPostText = `Posted on ${redditPostDate}\n\n${truncateText(redditPost.title, 270)}`;
 
   let thumbnailBlob: Blob | undefined; 
   if (
