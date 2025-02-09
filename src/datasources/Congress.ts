@@ -219,12 +219,20 @@ const getSummaryContentForBill = async(
     throw new Error(`Could not fetch latest summary for bill ${bill.number}`);
   }
 
-  /** 
-   * If we're pulling from the Congress API, they literally
-   * just return the raw HTML from the congress.gov equivalent,
-   * a.k.a what we pull from puppeteer above...
-   */
-  summaryToUse.text = removeHtmlTagsFromText(summaryToUse.text);
+  const preProcessSummaryText = (initText: string) => {
+    let toReturn = initText.slice();
+    /** 
+     * If we're pulling from the Congress API, they literally
+     * just return the raw HTML from the congress.gov equivalent,
+     * a.k.a what we pull from puppeteer above...
+     */
+    toReturn = removeHtmlTagsFromText(toReturn);
+    toReturn = toReturn.replace(bill.title, "");
+    toReturn = toReturn.trim();
+    return toReturn;
+  }
+
+  summaryToUse.text = preProcessSummaryText(summaryToUse.text);
   return {
     ...summaryToUse,
     bill: {
@@ -300,8 +308,8 @@ const postBillToBluesky = async(
   agent: BlueskyClient
 ) => {
   try {
-    const paddedTitle = truncateText(bill.title, 175); 
-    let parentPostText = `${paddedTitle}\n\n`;
+    const title = bill.title; 
+    let parentPostText = `${title}\n\n`;
     parentPostText +=
       "Updated: " +
       moment(bill.updateDate).format("YYYY-MM-DD")
