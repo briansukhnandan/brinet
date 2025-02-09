@@ -301,14 +301,14 @@ const postBillToBluesky = async(
 ) => {
   try {
     const paddedTitle = truncateText(bill.title, 175); 
-    let parentPostText = `Action on: ${paddedTitle}\n\n`;
-    parentPostText += `Link: ${getBillUrlForViewer(bill)}\n`;
+    let parentPostText = `${paddedTitle}\n\n`;
+    parentPostText += `URL: ${getBillUrlForViewer(bill)}\n`;
     parentPostText +=
-      "Last Updated: " +
+      "Updated: " +
       moment(bill.updateDate).format("YYYY-MM-DD")
       +"\n";
     parentPostText += 
-      "First Introduced: " +
+      "Introduced: " +
       moment(bill.introducedDate).format("YYYY-MM-DD");
     const rootPost = await agent.postToBluesky({ text: parentPostText });
 
@@ -324,7 +324,7 @@ const postBillToBluesky = async(
       },
     );
 
-    let sponsorsReplyText = "Sponsors -\n";
+    let sponsorsReplyText = "Sponsors:\n";
     for (const sponsor of bill.sponsors) {
       if (sponsorsReplyText.length < 270) {
         sponsorsReplyText += `- ${sponsor.fullName}\n`;
