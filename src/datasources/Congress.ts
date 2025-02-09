@@ -4,6 +4,7 @@ import { parse } from "node-html-parser";
 import moment from "moment-timezone";
 import {
   IS_DEV,
+  chunkText,
   fetchSecret,
   getCurrentDate,
   getCurrentTime,
@@ -323,16 +324,22 @@ const postBillToBluesky = async(
     });
 
     const summaryText = bill.summaryText;
-    const summaryReplyText = truncateText(summaryText, 300);
-    const summaryReplyPost = await agent.postToBluesky(
-      { 
-        text: summaryReplyText, 
-        reply: {
-          root: rootPost,
-          parent: rootPost,
-        }
-      },
-    );
+    const chunkedSummary = chunkText(summaryText, 275, true);
+
+    let postPointer = rootPost;
+    for (const segment of chunkedSummary) {
+      const summaryReplyPost = await agent.postToBluesky(
+        { 
+          text: segment, 
+          reply: {
+            root: rootPost,
+            parent: postPointer,
+          }
+        },
+      );
+      postPointer = summaryReplyPost;
+    }
+
 
     let sponsorsReplyText = "Sponsors:\n";
     for (const sponsor of bill.sponsors) {
@@ -346,7 +353,7 @@ const postBillToBluesky = async(
         text: sponsorsReplyText,
         reply: {
           root: rootPost,
-          parent: summaryReplyPost,
+          parent: postPointer,
         }
       },
     );

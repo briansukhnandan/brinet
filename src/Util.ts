@@ -64,6 +64,22 @@ export function truncateText(text: string, length = 250) {
   return `${text.slice(0, length - 3)}...`;
 }
 
+export function chunkText(text: string, length = 275, includePrefix = false) {
+  let list: string[] = [];
+  const total = parseInt(((text.length / length) + 1).toString());
+  let textCtr = 0;
+  while (text.length) {
+    const prefix = includePrefix && total > 1
+      // Space at the end is intentional
+      ? `[${textCtr + 1}/${total}] `
+      : "";
+    list.push(prefix + text.slice(0, length));
+    text = text.slice(length);
+    textCtr += 1;
+  }
+  return list;
+}
+
 export function baseFileName(pathToFile: string) {
   const split = pathToFile.split("/");
   if (!split.length) {

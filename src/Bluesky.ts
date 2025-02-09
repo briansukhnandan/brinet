@@ -118,8 +118,8 @@ export class BlueskyClient {
     },
   ) => {
     const createdAt = post.createdAt ?? new Date().toISOString();
-    
-    let textToUse: string = truncateText(post.text, 150);
+    let textToUse = post.text.slice();
+
     let facets = null;
     if (post.link) {
       if (post.link.length > 150) {
