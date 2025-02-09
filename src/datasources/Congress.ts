@@ -105,6 +105,11 @@ const getDetailsAboutSpecificBill = async(
   }
 }
 
+/** 
+ * Launches a puppeteer instance with a valid
+ * User agent to bypass congress.gov cloudflare
+ * restrictions.
+ */
 const scrapeSummaryForBillFromCongressDotGov = async(
   bill: CongressBillDetailed
 ): Promise<CongressBillSummary> => {
