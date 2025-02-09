@@ -302,7 +302,6 @@ const postBillToBluesky = async(
   try {
     const paddedTitle = truncateText(bill.title, 175); 
     let parentPostText = `${paddedTitle}\n\n`;
-    parentPostText += `URL: ${getBillUrlForViewer(bill)}\n`;
     parentPostText +=
       "Updated: " +
       moment(bill.updateDate).format("YYYY-MM-DD")
@@ -310,7 +309,10 @@ const postBillToBluesky = async(
     parentPostText += 
       "Introduced: " +
       moment(bill.introducedDate).format("YYYY-MM-DD");
-    const rootPost = await agent.postToBluesky({ text: parentPostText });
+    const rootPost = await agent.postToBluesky({
+      text: parentPostText,
+      link: getBillUrlForViewer(bill),
+    });
 
     const summaryText = bill.summaryText;
     const summaryReplyText = truncateText(summaryText, 300);
