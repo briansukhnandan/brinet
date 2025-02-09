@@ -372,13 +372,11 @@ export const maybeKickOffCongressFeed = async(dbc: Dbc, agent: BlueskyClient) =>
 
   const billsToPost = mapBillInfoToSummaries(billInfos, billSummaries);
   for (const billToPost of billsToPost) {
-    setTimeout(async() => {
-      await postBillToBluesky(billToPost, agent);
-      insertBillInfoToDb(dbc, billToPost);
-      congressLogger.log(
-        `Posted the following bill: ${billToPost.title.slice(0, 200)}`
-      );
-    }, 5_000);
+    await postBillToBluesky(billToPost, agent);
+    insertBillInfoToDb(dbc, billToPost);
+    congressLogger.log(
+      `Posted the following bill: ${billToPost.title.slice(0, 200)}`
+    );
   }
 }
 

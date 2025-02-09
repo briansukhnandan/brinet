@@ -222,13 +222,11 @@ export const maybePullPostsFromRedditWorldNews = async(dbc: Dbc, agent: BlueskyC
 
   const posts = await redditFetcher.pullPostsFromRedditWorldNews();
   for (const redditPost of posts) {
-    setTimeout(async() => {
-      await postRedditPostToBluesky(agent, redditPost);
-      insertRedditPostToDb(dbc, redditPost);
-      worldNewsLogger.log(
-        `Posted the following thread with ID ${redditPost.id}: ${redditPost.title.slice(0, 200)}`
-      );
-    }, 5_000);
+    await postRedditPostToBluesky(agent, redditPost);
+    insertRedditPostToDb(dbc, redditPost);
+    worldNewsLogger.log(
+      `Posted the following thread with ID ${redditPost.id}: ${redditPost.title.slice(0, 200)}`
+    );
   }
 }
 
