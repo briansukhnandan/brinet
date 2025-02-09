@@ -1,4 +1,6 @@
 import { Dbc } from "src/db/Dbc";
+import puppeteer from "puppeteer";
+import { parse } from "node-html-parser";
 import moment from "moment-timezone";
 import {
   fetchSecret,
@@ -12,7 +14,8 @@ import {
 import { BlueskyClient } from "../Bluesky";
 import {
   CongressBillActionsRow,
-  Context
+  Context,
+  Nullable
 } from "../Constants";
 import { Logger } from "src/Logger";
 
@@ -101,36 +104,113 @@ const getDetailsAboutSpecificBill = async(
   }
 }
 
-const getLatestSummaryForBill = async(
-  {
-    billSummaryUrl,
-    billNumber,
-    billCongressNumber,
-  }: {
-    billSummaryUrl: string,
-    billNumber: string,
-    billCongressNumber: number,
-  }
+const scrapeSummaryForBillFromCongressDotGov = async(
+  bill: CongressBillDetailed
 ): Promise<CongressBillSummary> => {
-  if (!billSummaryUrl) {
-    throw new Error("Could not find summary URL!");
-  }
-  const summaryDetailsRaw = await _fetchFromUrlGivenFromBillResponse(billSummaryUrl);
-  const summaries: CongressBillSummary[] = summaryDetailsRaw.summaries;
-  
-  const updateDates = summaries.map(s => s.lastSummaryUpdateDate);
-  const latestUpdateDate = updateDates.reduce((latestDate, currDate) => {
-    return moment(latestDate).isBefore(moment(currDate)) ? currDate : latestDate
-  }, updateDates[0]);
+  const url = getBillUrlForViewer(bill);
+  const chromeUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36";
 
-  const latestSummary = summaries.find(
-    s => s.lastSummaryUpdateDate === latestUpdateDate
-  );
-  if (!latestSummary) {
-    throw new Error("Could not find latest summary for bill!");
+  let html: string = "";
+  const browser = await puppeteer.launch({ headless: true });
+  try {
+    const page = await browser.newPage();
+    await page.setUserAgent(chromeUserAgent);
+    await page.goto(url);
+    html = await page.content();
+
+    if (/Verifying you are human. This may take a few seconds/i.test(html)) {
+      throw new Error("Scraper hit with CloudFlare!");
+    }
+  } catch(e) {
+    congressLogger.log(`Failed to scrape summary from link: ${url}: ${e?.message}`);
+  } finally {
+    await browser.close();
+    congressLogger.log(`Terminated Puppeteer session!`);
   }
+
+  const billSummaryDiv = parse(html)
+    .querySelectorAll("div")
+    .find((div) => (
+      div.getAttribute("id") === "bill-summary" && 
+      div.getAttribute("class") === "main-wrapper"
+    ));
+
+  let summaryToReturn: CongressBillSummary = { 
+    text: "",
+    bill,
+    currentChamber: "House"
+  };
+  if (!billSummaryDiv) {
+    return summaryToReturn;
+  }
+
+  const currentVersionElem = billSummaryDiv
+    .querySelectorAll("span")
+    .find((span) => span.innerText?.match(/Introduced in/));
+  if (currentVersionElem) {
+    const chamber = currentVersionElem
+      .innerText
+      .match(/Introduced in ([a-zA-Z]+) \(\d/)?.[1];
+    if (chamber && ["House", "Senate"].includes(chamber)) {
+      summaryToReturn.currentChamber = chamber as CongressBillDetailed["originChamber"];
+    }
+  }
+
+  const allParagraphs = billSummaryDiv
+    .querySelectorAll("p");
+
+  const idxOfParaWithStrongElem = allParagraphs.findIndex(
+    (para) => !!para.querySelectorAll("strong").length
+  );
+
+  const relevantParagraphs = idxOfParaWithStrongElem > -1
+    ? allParagraphs.slice(idxOfParaWithStrongElem)
+    : allParagraphs;
+
+  summaryToReturn.text = relevantParagraphs
+    .map((para) => para.innerText)
+    .join(" ");
+
+  return summaryToReturn;
+}
+
+const getSummaryContentForBill = async(
+  bill: CongressBillDetailed
+): Promise<CongressBillSummary> => {
+  const billCongressNumber = bill.congress;
+  const billNumber = bill.number;
+
+  /** 
+   * This is not always guaranteed. If it's not there
+   * we attempt to scrape a summary from congress.gov.
+   */
+  const billSummaryUrl = bill.summaries?.url;
+  let summaryToUse: Nullable<CongressBillSummary> = null;
+  if (!billSummaryUrl) {
+    summaryToUse = await scrapeSummaryForBillFromCongressDotGov(bill);
+  } else {
+    const summaryDetailsRaw = await _fetchFromUrlGivenFromBillResponse(billSummaryUrl);
+    const summaries: CongressBillSummary[] = summaryDetailsRaw.summaries;
+
+    const updateDates = summaries.map(s => s.lastSummaryUpdateDate);
+    const latestUpdateDate = updateDates.reduce((latestDate, currDate) => {
+      return moment(latestDate).isBefore(moment(currDate)) ? currDate : latestDate
+    }, updateDates[0]);
+
+    const latestSummary = summaries.find(
+      s => s.lastSummaryUpdateDate === latestUpdateDate
+    );
+    if (latestSummary) {
+      summaryToUse = latestSummary;
+    }
+  }
+
+  if (!summaryToUse?.text) {
+    throw new Error(`Could not fetch latest summary for bill ${bill.number}`);
+  }
+
   return {
-    ...latestSummary,
+    ...summaryToUse,
     bill: {
       number: billNumber,
       congress: billCongressNumber,
@@ -153,7 +233,7 @@ const mapBillInfoToSummaries = (
     if (!summary) continue;
 
     billInfoCongregated.push({
-      summary,
+      summaryText: summary.text,
       sponsors: billInfo.sponsors,
       congress: billInfo.congress,
       policyArea: billInfo.policyArea?.name ?? "Not Available",
@@ -167,7 +247,12 @@ const mapBillInfoToSummaries = (
   return billInfoCongregated;
 }
 
-const getBillUrlForViewer = (bill: CongressBillFieldsOfInterest) =>
+const getBillUrlForViewer = (
+  bill: Pick<
+    CongressBillFieldsOfInterest, 
+    "congress" | "originChamber" | "number"
+  >
+) =>
   `https://www.congress.gov/bill/${numWithOrdinalSuffix(bill.congress)}-congress/${bill.originChamber === "House" ? "house" : "senate"}-bill/${bill.number}`;
 
 const insertBillInfoToDb = (dbc: Dbc, bill: CongressBillFieldsOfInterest) => {
@@ -198,21 +283,20 @@ const postBillToBluesky = async(
   bill: CongressBillFieldsOfInterest,
   agent: BlueskyClient
 ) => {
-  let parentPostText = `Action on Bill: ${bill.number} - ${getBillUrlForViewer(bill)}\n\n`;
-  const paddedTitle = truncateText(bill.title, 175); 
-  parentPostText += paddedTitle+"\n\n";
-  parentPostText += 
-    "First Introduced: " +
-    moment(bill.introducedDate).format("lll") +
-    "\n";
-  parentPostText +=
-    "Last Updated: " +
-    moment(bill.updateDate).format("lll")
-    +"\n";
-
   try {
+    const paddedTitle = truncateText(bill.title, 175); 
+    let parentPostText = `Action on: ${paddedTitle}\n\n`;
+    parentPostText += `Link: ${getBillUrlForViewer(bill)}\n`;
+    parentPostText +=
+      "Last Updated: " +
+      moment(bill.updateDate).format("YYYY-MM-DD")
+      +"\n";
+    parentPostText += 
+      "First Introduced: " +
+      moment(bill.introducedDate).format("YYYY-MM-DD");
     const rootPost = await agent.postToBluesky({ text: parentPostText });
-    const summaryText = bill.summary.text;
+
+    const summaryText = bill.summaryText;
     const summaryReplyText = truncateText(summaryText, 300);
     const summaryReplyPost = await agent.postToBluesky(
       { 
@@ -224,9 +308,9 @@ const postBillToBluesky = async(
       },
     );
 
-    let sponsorsReplyText = "Sponsors of this Bill:\n";
+    let sponsorsReplyText = "Sponsors -\n";
     for (const sponsor of bill.sponsors) {
-      if (sponsorsReplyText.length < 250) {
+      if (sponsorsReplyText.length < 270) {
         sponsorsReplyText += `- ${sponsor.fullName}\n`;
       }
     }
@@ -242,7 +326,9 @@ const postBillToBluesky = async(
     );
   } catch(e) {
     if (e?.message) {
-      congressLogger.log(`Ran into error posting bill: ${bill.number}`);
+      congressLogger.log(
+        `Ran into error posting bill: ${bill.number}: ${e.message}`
+      );
     }
   }
 }
@@ -262,15 +348,7 @@ export const maybeKickOffCongressFeed = async(dbc: Dbc, agent: BlueskyClient) =>
   const billInfos = await handlePromiseAllSettled(billInfoProms);
   if (!billInfos.length) return;
 
-  const billInfosWithSummaries = billInfos
-    .filter(info => !!info.summaries)
-  const billSummariesProms = billInfosWithSummaries.map((b) => 
-    getLatestSummaryForBill({
-      billCongressNumber: b.congress,
-      billSummaryUrl: b.summaries.url,
-      billNumber: b.number
-    }
-  ));
+  const billSummariesProms = billInfos.map(getSummaryContentForBill);
   const billSummaries = await handlePromiseAllSettled(billSummariesProms);
   if (!billSummaries.length) return;
 
@@ -323,12 +401,18 @@ type CongressBillDetailed = {
   }[];
 };
 type CongressBillSummary = {
-  actionDate: string;
-  actionDesc: string;
+  text: string;
   bill: Pick<CongressBillBasic, "congress" | "number">;
   currentChamber: "House" | "Senate";
-  lastSummaryUpdateDate: string;
-  text: string;
+
+  /** 
+   * Summaries can either be scraped or fetched
+   * from Congress.gov, the latter giving us the
+   * below fields.
+   */
+  actionDate?: string;
+  lastSummaryUpdateDate?: string;
+  actionDesc?: string;
 };
 
 /** Our own conglomerated type */
@@ -339,7 +423,7 @@ type CongressBillFieldsOfInterest = {
   policyArea: string;
   introducedDate: string;
   updateDate: string;
-  summary: CongressBillSummary;
   sponsors: CongressBillDetailed["sponsors"];
+  summaryText: string;
   originChamber: "House" | "Senate";
 };

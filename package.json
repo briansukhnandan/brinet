@@ -17,6 +17,7 @@
     "dotenv": "^16.4.7",
     "moment-timezone": "^0.5.46",
     "node-html-parser": "^7.0.1",
+    "puppeteer": "^24.2.0",
     "sqlite3": "^5.1.7",
     "typescript": "^5.7.2"
   },
