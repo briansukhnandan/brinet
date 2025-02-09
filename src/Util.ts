@@ -119,5 +119,5 @@ export const removeHtmlTagsFromText = (text: string): string => {
   while(/\s{2,}/.test(textToReturn)) {
     textToReturn = textToReturn.replace(/\s{2,}/, " ")
   }
-  return textToReturn;
+  return textToReturn.trim();
 }
