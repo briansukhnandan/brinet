@@ -3,6 +3,7 @@ import puppeteer from "puppeteer";
 import { parse } from "node-html-parser";
 import moment from "moment-timezone";
 import {
+  IS_DEV,
   fetchSecret,
   getCurrentDate,
   getCurrentTime,
@@ -187,6 +188,9 @@ const getSummaryContentForBill = async(
   const billSummaryUrl = bill.summaries?.url;
   let summaryToUse: Nullable<CongressBillSummary> = null;
   if (!billSummaryUrl) {
+    if (!IS_DEV()) {
+      throw new Error("Puppeteer scraping is not available in PROD. Yet..");
+    }
     summaryToUse = await scrapeSummaryForBillFromCongressDotGov(bill);
   } else {
     const summaryDetailsRaw = await _fetchFromUrlGivenFromBillResponse(billSummaryUrl);
