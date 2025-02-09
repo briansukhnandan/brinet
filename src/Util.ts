@@ -102,3 +102,22 @@ export const IS_DEV = () => {
 const IMAGE_FILE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif"];
 export const doesFileHaveImageExtension = (fileName: string) =>
   IMAGE_FILE_EXTENSIONS.some(ext => fileName.endsWith(ext));
+
+export const removeHtmlTagsFromText = (text: string): string => {
+  const htmlTags = ["p", "strong", "a", "h1", "h2", "h3"];
+  let textToReturn = text.slice();
+  for (const tag of htmlTags) {
+    const openingTag = `<${tag}>`;
+    const closingTag = `</${tag}>`;
+    textToReturn = textToReturn
+      .replaceAll(openingTag, " ")
+      .replaceAll(closingTag, " ")
+  }
+
+  // Why does .replaceAll() not work with a regex input?
+  // don't care enough to debug this, this while loop will do.
+  while(/\s{2,}/.test(textToReturn)) {
+    textToReturn = textToReturn.replace(/\s{2,}/, " ")
+  }
+  return textToReturn;
+}

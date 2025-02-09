@@ -10,6 +10,7 @@ import {
   handlePromiseAllSettled,
   numWithOrdinalSuffix,
   prepareObjForRequest,
+  removeHtmlTagsFromText,
   truncateText
 } from "../Util";
 import { BlueskyClient } from "../Bluesky";
@@ -218,6 +219,12 @@ const getSummaryContentForBill = async(
     throw new Error(`Could not fetch latest summary for bill ${bill.number}`);
   }
 
+  /** 
+   * If we're pulling from the Congress API, they literally
+   * just return the raw HTML from the congress.gov equivalent,
+   * a.k.a what we pull from puppeteer above...
+   */
+  summaryToUse.text = removeHtmlTagsFromText(summaryToUse.text);
   return {
     ...summaryToUse,
     bill: {
