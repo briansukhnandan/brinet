@@ -99,6 +99,14 @@ export class BlueskyClient {
     }
   }
 
+  /** 
+   * Very simple wrapper around posting to Bluesky.
+   * Does not do any sort of internal validation to
+   * determine whether or not the post has a valid length,
+   * content, etc.
+   *
+   * All error handling is left up to the caller!
+   */
   public postToBluesky = async(
     post: {
       text: string,
@@ -129,10 +137,16 @@ export class BlueskyClient {
         );
       }
 
+      /** Sometimes we desire to just post a link */
+      const rawText = !post.text 
+        ? post.link
+        : `${textToUse}\n${post.link}`;
       const rt = new RichText({
-        text: `${textToUse}\n${post.link}`,
+        text: rawText,
       });
       await rt.detectFacets(this.agent);
+
+      /** Need to reupdate with the richtext props. */
       textToUse = rt.text;
       facets = rt.facets;
     }

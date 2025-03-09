@@ -119,10 +119,25 @@ const IMAGE_FILE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif"];
 export const doesFileHaveImageExtension = (fileName: string) =>
   IMAGE_FILE_EXTENSIONS.some(ext => fileName.endsWith(ext));
 
+/** 
+ * Please note, this list is not exhaustive. This is
+ * just the set of HTML tags that appear in Congress
+ * API summaries; which are directly fetched from their website.
+ */
+const COMMON_HTML_TAGS = [
+  "p",
+  "strong",
+  "a", 
+  "h1",
+  "h2",
+  "h3",
+  "em",
+  "li",
+  "ul",
+];
 export const removeHtmlTagsFromText = (text: string): string => {
-  const htmlTags = ["p", "strong", "a", "h1", "h2", "h3"];
   let textToReturn = text.slice();
-  for (const tag of htmlTags) {
+  for (const tag of COMMON_HTML_TAGS) {
     const openingTag = `<${tag}>`;
     const closingTag = `</${tag}>`;
     textToReturn = textToReturn

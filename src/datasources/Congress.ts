@@ -308,8 +308,17 @@ const postBillToBluesky = async(
   bill: CongressBillFieldsOfInterest,
   agent: BlueskyClient
 ) => {
+  /** 
+   * Temporary debug variable used in the .catch()
+   * below so we can have some introspection into what
+   * text is erroring bc of the 300 char limit.
+   */
+  let postTextThatMaybeErrors = "";
+
   try {
-    const title = bill.title; 
+    const title = bill.title.length > 200 
+      ? truncateText(bill.title, 200)
+      : bill.title; 
     let parentPostText = `${title}\n\n`;
     parentPostText +=
       "Updated: " +
@@ -318,9 +327,10 @@ const postBillToBluesky = async(
     parentPostText += 
       "Introduced: " +
       moment(bill.introducedDate).format("YYYY-MM-DD");
+
+    postTextThatMaybeErrors = parentPostText;
     const rootPost = await agent.postToBluesky({
       text: parentPostText,
-      link: getBillUrlForViewer(bill),
     });
 
     const summaryText = bill.summaryText;
@@ -328,6 +338,7 @@ const postBillToBluesky = async(
 
     let postPointer = rootPost;
     for (const segment of chunkedSummary) {
+      postTextThatMaybeErrors = segment;
       const summaryReplyPost = await agent.postToBluesky(
         { 
           text: segment, 
@@ -340,7 +351,6 @@ const postBillToBluesky = async(
       postPointer = summaryReplyPost;
     }
 
-
     let sponsorsReplyText = "Sponsors:\n";
     for (const sponsor of bill.sponsors) {
       if (sponsorsReplyText.length < 270) {
@@ -348,7 +358,8 @@ const postBillToBluesky = async(
       }
     }
 
-    await agent.postToBluesky(
+    postTextThatMaybeErrors = sponsorsReplyText;
+    const sponsorsReplyPost = await agent.postToBluesky(
       {
         text: sponsorsReplyText,
         reply: {
@@ -357,10 +368,25 @@ const postBillToBluesky = async(
         }
       },
     );
+
+    postTextThatMaybeErrors = `Link to bill: ${getBillUrlForViewer(bill)}`;
+    await agent.postToBluesky(
+      {
+        text: "Link to bill:",
+        link: getBillUrlForViewer(bill),
+        reply: {
+          root: rootPost,
+          parent: sponsorsReplyPost,
+        }
+      },
+    );
   } catch(e) {
-    if (e?.message) {
+    congressLogger.log(
+      `Ran into error posting bill: ${bill.number}: ${e.message}`
+    );
+    if (postTextThatMaybeErrors) {
       congressLogger.log(
-        `Ran into error posting bill: ${bill.number}: ${e.message}`
+        `This was the text attempting to be posted: ${postTextThatMaybeErrors}`
       );
     }
   }
@@ -390,7 +416,7 @@ export const maybeKickOffCongressFeed = async(dbc: Dbc, agent: BlueskyClient) =>
     await postBillToBluesky(billToPost, agent);
     insertBillInfoToDb(dbc, billToPost);
     congressLogger.log(
-      `Posted the following bill: ${billToPost.title.slice(0, 200)}`
+      `Posted the following bill: ${truncateText(billToPost.title, 200)}`
     );
   }
 }
